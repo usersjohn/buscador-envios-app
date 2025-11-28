@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>ADMINISTRACIÓN | Corrección de Envíos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="styles.css" rel="stylesheet">
+    <style>
+        /* Estilos específicos para la vista de administrador */
+        .admin-header {
+            background-color: #ffcc00; 
+            color: #333;
+            padding: 10px;
+            text-align: center;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <header>
+            <div class="logo-placeholder">
+                <img src="/logo.png" alt="Logo de la Empresa" id="custom-logo"> 
+            </div>
+            <h1>Portal de Corrección de Datos</h1>
+            <div class="admin-header">¡MODO ADMINISTRADOR ACTIVO! Los datos son editables al hacer clic.</div>
+        </header>
+
+        <div class="search-container">
+            <form id="search-form">
+                <div class="input-group">
+                    <select id="search-type" name="type">
+                        <option value="ddp">Código DDP (Ref.)</option>
+                        <option value="tracking">Número de Seguimiento</option>
+                        <option value="receptor">Nombre y Apellido</option>
+                    </select>
+                </div>
+                <div class="input-group value-input">
+                    <input type="text" id="search-value" name="value" placeholder="Buscar para corregir..." required>
+                </div>
+                <button type="submit" id="search-button">Buscar Paquete</button>
+            </form>
+            <div id="found-count"></div>
+        </div>
+
+        <!-- Contenedor donde se inyectarán los resultados de la búsqueda -->
+        <div id="results-container">
+            <!-- La lógica de app.js detectará que está en /admin y activará los clicks de edición -->
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
+```
+eof
+
+### 🚨 Pasos a Seguir
+
+1.  **Crea el Archivo:** Crea el archivo **`public/admin.html`** y pega el código anterior.
+2.  **Subir la Corrección:** Sube el nuevo archivo a GitHub:
+
+    ```bash
+    git add public/admin.html
+    git commit -m "Feature: Añadido el archivo admin.html faltante para el portal de corrección"
+    git push origin main
