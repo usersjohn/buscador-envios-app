@@ -31,16 +31,13 @@ header {
 }
 
 .logo-placeholder {
-    height: 60px; /* Tamaño del logo en el ejemplo */
+    height: 60px; 
     margin-bottom: 10px;
 }
 
 #custom-logo {
     max-width: 120px;
     height: auto;
-    /* Si el usuario no sube un logo, este CSS puede mostrar el texto DDP ENVIOS */
-    background: var(--primary-blue);
-    content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="60"><rect width="100%" height="100%" fill="%23007bff"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="20" fill="white">LOGO DDP</text></svg>');
 }
 
 h1 {
@@ -51,36 +48,26 @@ h1 {
 
 /* --- SEARCH FORM --- */
 #search-form {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr 1.5fr; 
     gap: 10px;
     margin-bottom: 15px;
 }
 
 .input-group {
-    flex-grow: 1;
+    grid-column: span 1;
 }
 
-#search-type {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 0.9em;
+.input-group label {
+    display: none; 
 }
 
-#search-value {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 1em;
+.value-input {
+    grid-column: 2 / 3; 
 }
 
 #search-button {
-    flex-grow: 1;
+    grid-column: span 2; 
     background-color: var(--main-blue);
     color: white;
     padding: 10px 15px;
@@ -89,7 +76,15 @@ h1 {
     cursor: pointer;
     font-weight: 600;
     transition: background-color 0.2s;
+}
+
+#search-type, #search-value {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
     width: 100%;
+    box-sizing: border-box;
+    font-size: 1em;
 }
 
 #found-count {
@@ -114,7 +109,7 @@ h1 {
 }
 
 .image-section {
-    border: 1px solid #ff7f7f;
+    border: 1px solid #ff7f7f; 
     background-color: #ffe0e0;
     color: #cc0000;
     text-align: center;
@@ -142,13 +137,27 @@ h1 {
     text-align: right;
 }
 
+/* Campos editables para indicar que se puede hacer clic */
+.editable {
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-style: dashed;
+    color: #cc4d00; /* Color naranja para indicar edición */
+    font-weight: bold;
+    transition: color 0.1s;
+}
+
+.editable:hover {
+    color: #ff8800;
+}
+
 .status-section {
     margin-top: 15px;
     padding: 10px;
     border-radius: 4px;
-    background-color: #d1e7dd; /* Verde claro genérico */
+    background-color: #d4edda; 
     font-weight: bold;
-    color: #0f5132;
+    color: #155724;
     text-align: center;
 }
 
@@ -161,6 +170,9 @@ h1 {
         box-shadow: none;
     }
     #search-form {
-        flex-direction: column;
+        grid-template-columns: 1fr;
+    }
+    .input-group {
+        grid-column: span 1;
     }
 }

@@ -2,30 +2,51 @@
 const express = require('express');
 const { Pool } = require('pg');
 const path = require('path');
+const cookieParser = require('cookie-parser'); // Para manejar la sesión simple
 
-// --- CORRECCIÓN CRÍTICA: Inicializar 'app' antes de usarlo ---
+// --- CONFIGURACIÓN DE SEGURIDAD (¡Define tu contraseña aquí!) ---
+const ADMIN_PASSWORD = "TU_CONTRASEÑA_SECRETA_ADMIN"; // <-- ¡CAMBIA ESTO!
+const SESSION_COOKIE_NAME = 'admin_session';
+
+// --- Inicialización de Express ---
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuración de PostgreSQL. Railway inyecta esta variable.
+// Configuración de PostgreSQL
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
 
-// Middleware para servir archivos estáticos (index.html, styles.css, app.js)
+// Middlewares
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json()); // Necesario para manejar solicitudes JSON
+app.use(express.json()); 
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser()); // Habilitar lectura de cookies
 
-// 1. Ruta principal: Sirve la página de búsqueda
+// --- FUNCIÓN DE VERIFICACIÓN DE SESIÓN (Middleware) ---
+const requireAdmin = (req, res, next) => {
+    // Si la cookie de sesión existe y es correcta, permite el acceso
+    if (req.cookies[SESSION_COOKIE_NAME] === ADMIN_PASSWORD) {
+        return next();
+    }
+    // Si no está autenticado, redirige a la página de login
+    res.redirect('/admin-login');
+};
+
+// --- RUTAS PÚBLICAS (Búsqueda) ---
+
+// 1. Ruta principal: Sirve la página de búsqueda (SIN EDICIÓN)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// 2. API de Búsqueda: Ejecuta la consulta a la base de datos
+// 2. API de Búsqueda: Ejecuta la consulta (Usada por el público y el admin)
 app.get('/api/search', async (req, res) => {
     const { type, value } = req.query;
-    const searchTerm = value ? value.trim().toUpperCase() : ''; // Normalizamos la búsqueda
+    const searchTerm = value ? value.trim().toUpperCase() : '';
+
+    // ... (El resto de la lógica de búsqueda GET es la misma) ...
 
     if (!searchTerm || !type) {
         return res.status(400).json({ error: 'Faltan parámetros de búsqueda.' });
@@ -40,13 +61,11 @@ app.get('/api/search', async (req, res) => {
                 query += `numero_seguimiento = $1`;
                 break;
             case 'ddp':
-                // Extrae solo números y busca exactamente el código DDP
                 const cleanDDP = searchTerm.replace(/[^0-9]/g, '');
                 query += `codigo_ddp = $1`;
                 params = [cleanDDP];
                 break;
             case 'receptor':
-                // Búsqueda parcial por nombre y apellido (usando ILIKE y comodines)
                 query += `nombre_receptor ILIKE $1`;
                 params = [`%${searchTerm}%`];
                 break;
@@ -56,7 +75,6 @@ app.get('/api/search', async (req, res) => {
 
         const result = await pool.query(query, params);
 
-        // Envía el array de resultados al frontend
         res.json({
             count: result.rows.length,
             packages: result.rows
@@ -67,6 +85,54 @@ app.get('/api/search', async (req, res) => {
         res.status(500).json({ error: 'Error al consultar la base de datos. Verifique la conexión.' });
     }
 });
+
+
+// --- RUTAS DE ADMINISTRACIÓN (PROTEGIDAS) ---
+
+// Ruta de Login (Público)
+app.get('/admin-login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
+});
+
+// Procesar Login (Público)
+app.post('/admin-login', (req, res) => {
+    const { password } = req.body;
+    if (password === ADMIN_PASSWORD) {
+        // Establecer una cookie simple para la sesión
+        res.cookie(SESSION_COOKIE_NAME, ADMIN_PASSWORD, { maxAge: 3600000, httpOnly: true }); // 1 hora
+        return res.redirect('/admin');
+    }
+    res.send('Contraseña incorrecta. <a href="/admin-login">Intentar de nuevo</a>');
+});
+
+// Portal de Administración (PROTEGIDO)
+app.get('/admin', requireAdmin, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// 3. API de Actualización (PROTEGIDA)
+app.post('/api/update', requireAdmin, async (req, res) => {
+    const { id, field, value } = req.body; 
+
+    const forbiddenFields = ['id', 'created_at', 'updated_at']; 
+    if (forbiddenFields.includes(field) || !id || !field || value === undefined || value === null) {
+        return res.status(400).json({ success: false, error: 'Parámetros inválidos o campo prohibido.' });
+    }
+
+    try {
+        await pool.query(
+            `UPDATE envios SET ${field} = $1 WHERE id = $2`,
+            [value, id]
+        );
+        
+        res.status(200).json({ success: true, message: 'Registro actualizado con éxito.' });
+
+    } catch (err) {
+        console.error('Error al actualizar:', err.message);
+        res.status(500).json({ success: false, error: 'Error al actualizar la DB. Verifique el nombre del campo o el tipo de dato.' });
+    }
+});
+
 
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
