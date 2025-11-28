@@ -2,13 +2,13 @@
 const express = require('express');
 const { Pool } = require('pg');
 const path = require('path');
-const cookieParser = require('cookie-parser'); // Para manejar la sesión simple
+const cookieParser = require('cookie-parser'); 
 
-// --- CONFIGURACIÓN DE SEGURIDAD (¡Define tu contraseña aquí!) ---
-const ADMIN_PASSWORD = "TU_CONTRASEÑA_SECRETA_ADMIN"; // <-- ¡CAMBIA ESTO!
+// --- CONFIGURACIÓN DE SEGURIDAD ---
+const ADMIN_PASSWORD = "TU_CONTRASEÑA_SECRETA_ADMIN"; 
 const SESSION_COOKIE_NAME = 'admin_session';
 
-// --- Inicialización de Express ---
+// --- 1. Inicialización de Express (CRÍTICO: El orden es vital) ---
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -22,17 +22,16 @@ const pool = new Pool({
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json()); 
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser()); // Habilitar lectura de cookies
+app.use(cookieParser()); 
 
 // --- FUNCIÓN DE VERIFICACIÓN DE SESIÓN (Middleware) ---
 const requireAdmin = (req, res, next) => {
-    // Si la cookie de sesión existe y es correcta, permite el acceso
     if (req.cookies[SESSION_COOKIE_NAME] === ADMIN_PASSWORD) {
         return next();
     }
-    // Si no está autenticado, redirige a la página de login
     res.redirect('/admin-login');
 };
+
 
 // --- RUTAS PÚBLICAS (Búsqueda) ---
 
@@ -41,12 +40,10 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// 2. API de Búsqueda: Ejecuta la consulta (Usada por el público y el admin)
+// 2. API de Búsqueda (Método GET): Ejecuta la consulta (Usado por el público y el admin)
 app.get('/api/search', async (req, res) => {
     const { type, value } = req.query;
     const searchTerm = value ? value.trim().toUpperCase() : '';
-
-    // ... (El resto de la lógica de búsqueda GET es la misma) ...
 
     if (!searchTerm || !type) {
         return res.status(400).json({ error: 'Faltan parámetros de búsqueda.' });
@@ -98,8 +95,7 @@ app.get('/admin-login', (req, res) => {
 app.post('/admin-login', (req, res) => {
     const { password } = req.body;
     if (password === ADMIN_PASSWORD) {
-        // Establecer una cookie simple para la sesión
-        res.cookie(SESSION_COOKIE_NAME, ADMIN_PASSWORD, { maxAge: 3600000, httpOnly: true }); // 1 hora
+        res.cookie(SESSION_COOKIE_NAME, ADMIN_PASSWORD, { maxAge: 3600000, httpOnly: true }); 
         return res.redirect('/admin');
     }
     res.send('Contraseña incorrecta. <a href="/admin-login">Intentar de nuevo</a>');
@@ -137,3 +133,15 @@ app.post('/api/update', requireAdmin, async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+```
+eof
+
+### 3. Pasos para Corregir el Despliegue
+
+1.  **Edita `package.json`:** Asegúrate de que tu `package.json` local sea idéntico al que está en el Canvas ahora (incluyendo `cookie-parser`).
+2.  **Edita `server.js`:** Reemplaza el contenido completo con el código del Canvas.
+3.  **Subir la Corrección:**
+    ```bash
+    git add package.json server.js
+    git commit -m "Fix: Solucionado error 'Cannot find module cookie-parser' y verificado el método GET"
+    git push origin main
