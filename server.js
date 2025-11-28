@@ -5,7 +5,6 @@ const path = require('path');
 const cookieParser = require('cookie-parser'); 
 
 // --- CONFIGURACIÓN DE SEGURIDAD ---
-// CRÍTICO: La contraseña debe leerse desde la variable de entorno de Railway
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD; 
 const SESSION_COOKIE_NAME = 'admin_session';
 
@@ -27,10 +26,9 @@ app.use(cookieParser());
 
 // --- FUNCIÓN DE VERIFICACIÓN DE SESIÓN (Middleware) ---
 const requireAdmin = (req, res, next) => {
-    // Si la variable de entorno no está configurada, el login fallará
     if (!ADMIN_PASSWORD) {
         console.error('ERROR DE SEGURIDAD: ADMIN_PASSWORD no configurada en Railway.');
-        return res.status(500).send('ERROR: La clave de administración no está configurada.');
+        return res.status(500).send('ERROR: La clave de administración no está configurada en el servidor.');
     }
     
     if (req.cookies[SESSION_COOKIE_NAME] === ADMIN_PASSWORD) {
@@ -51,6 +49,7 @@ app.get('/', (req, res) => {
 app.get('/api/search', async (req, res) => {
     const { type, value } = req.query;
     const searchTerm = value ? value.trim().toUpperCase() : '';
+    const originalValue = req.query.value ? req.query.value.trim() : ''; // Valor sin uppercase para ID
 
     if (!searchTerm || !type) {
         return res.status(400).json({ error: 'Faltan parámetros de búsqueda.' });
@@ -73,6 +72,15 @@ app.get('/api/search', async (req, res) => {
                 query += `nombre_receptor ILIKE $1`;
                 params = [`%${searchTerm}%`];
                 break;
+            case 'dbid':
+                // Nueva búsqueda por ID de PostgreSQL (número entero)
+                const dbId = parseInt(originalValue, 10);
+                if (isNaN(dbId) || dbId <= 0) {
+                     return res.status(400).json({ error: 'El ID de registro debe ser un número entero positivo.' });
+                }
+                query += `id = $1`;
+                params = [dbId]; // El ID es numérico, lo pasamos como número
+                break;
             default:
                 return res.status(400).json({ error: 'Tipo de búsqueda no válido.' });
         }
@@ -93,14 +101,11 @@ app.get('/api/search', async (req, res) => {
 
 // --- RUTAS DE ADMINISTRACIÓN (PROTEGIDAS) ---
 
-// Ruta de Login (Público)
 app.get('/admin-login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
 });
 
-// Procesar Login (Público)
 app.post('/admin-login', (req, res) => {
-    // Si la variable de entorno no está configurada, el login fallará
     if (!ADMIN_PASSWORD) {
         console.error('ERROR DE SEGURIDAD: ADMIN_PASSWORD no configurada en Railway.');
         return res.status(500).send('ERROR: La clave de administración no está configurada en el servidor.');
@@ -114,31 +119,37 @@ app.post('/admin-login', (req, res) => {
     res.send('Contraseña incorrecta. <a href="/admin-login">Intentar de nuevo</a>');
 });
 
-// Portal de Administración (PROTEGIDO)
 app.get('/admin', requireAdmin, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // 3. API de Actualización (PROTEGIDA)
 app.post('/api/update', requireAdmin, async (req, res) => {
-    const { id, field, value } = req.body; 
+    let { id, field, value } = req.body; 
 
+    const recordId = parseInt(id, 10);
+    
+    if (typeof value === 'string' && value.trim() === '') {
+        value = null;
+    }
+    
     const forbiddenFields = ['id', 'created_at', 'updated_at']; 
-    if (forbiddenFields.includes(field) || !id || !field || value === undefined || value === null) {
-        return res.status(400).json({ success: false, error: 'Parámetros inválidos o campo prohibido.' });
+    
+    if (forbiddenFields.includes(field) || !recordId || recordId <= 0 || !field) {
+        return res.status(400).json({ success: false, error: 'Parámetros inválidos. ID no numérico o faltante.' });
     }
 
     try {
         await pool.query(
             `UPDATE envios SET ${field} = $1 WHERE id = $2`,
-            [value, id]
+            [value, recordId]
         );
         
         res.status(200).json({ success: true, message: 'Registro actualizado con éxito.' });
 
     } catch (err) {
         console.error('Error al actualizar:', err.message);
-        res.status(500).json({ success: false, error: 'Error al actualizar la DB. Verifique el nombre del campo o el tipo de dato.' });
+        res.status(500).json({ success: false, error: `Error interno al actualizar. Tipo de dato o caracter inválido: ${err.message}` });
     }
 });
 

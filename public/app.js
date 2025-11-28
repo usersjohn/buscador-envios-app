@@ -7,9 +7,9 @@ function validateAndFormat(field, value) {
     // 1. Manejo de Fechas
     if (field === 'fecha_envio' || field === 'fecha_recepcion') {
         if (trimmedValue.toUpperCase() === 'N/A' || trimmedValue === '') {
-            return null; 
+            return null;
         }
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/; 
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
         if (!dateRegex.test(trimmedValue)) {
             alert(`Error: El campo de fecha (${field}) debe estar en formato YYYY-MM-DD o ser 'N/A'.`);
             return false;
@@ -24,21 +24,21 @@ function validateAndFormat(field, value) {
             alert(`Error: El campo '${field}' debe ser un valor numérico.`);
             return false;
         }
-        return numericValue; 
+        return numericValue;
     }
-    
+
     // 3. Manejo de Texto
     if (field === 'nombre_receptor') {
         return trimmedValue.toUpperCase();
     }
-    
+
     return trimmedValue;
 }
 
 // --- LÓGICA DE EDICIÓN RÁPIDA (CRUD UPDATE) ---
 function quickEdit(id, currentField, currentValue) {
     // ESTA FUNCIÓN SOLO SE LLAMARÁ SI EL ELEMENTO TIENE EL ONCLICK (SOLO EN /ADMIN)
-    
+
     const newValue = prompt(
         `Corregir campo '${currentField}' (ID: ${id}):\n\nValor actual: ${currentValue}\n\nIngrese nuevo valor:`
     );
@@ -48,9 +48,9 @@ function quickEdit(id, currentField, currentValue) {
     }
 
     const validatedValue = validateAndFormat(currentField, newValue);
-    
+
     if (validatedValue === false) {
-        return; 
+        return;
     }
 
     fetch('/api/update', { // Llama a la API PROTEGIDA
@@ -60,23 +60,23 @@ function quickEdit(id, currentField, currentValue) {
         },
         body: JSON.stringify({
             id: id,
-            field: currentField, 
-            value: validatedValue 
+            field: currentField,
+            value: validatedValue
         }),
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert(`✅ Actualización de '${currentField}' exitosa!`);
-            window.location.reload(); 
-        } else {
-            alert(`❌ Error al guardar: ${data.error}`);
-        }
-    })
-    .catch(error => {
-        console.error('Error de red:', error);
-        alert('❌ Error de conexión al servidor.');
-    });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`✅ Actualización de '${currentField}' exitosa!`);
+                window.location.reload();
+            } else {
+                alert(`❌ Error al guardar: ${data.error}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error de red:', error);
+            alert('❌ Error de conexión al servidor.');
+        });
 }
 
 // --- LÓGICA DE RENDERIZADO ---
@@ -86,16 +86,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchType = document.getElementById('search-type');
     const searchValue = document.getElementById('search-value');
     const foundCountDiv = document.getElementById('found-count');
-    
+
     // Detectar si estamos en la vista de ADMINISTRACIÓN o PÚBLICA
     const isAdminView = window.location.pathname.startsWith('/admin');
+
+    // --- MEJORA: GESTIÓN DEL DROPDOWN SEGÚN ROL ---
+    if (isAdminView) {
+        // Si es admin, AGREGAR la opción de búsqueda por ID al principio
+        const option = document.createElement('option');
+        option.value = 'dbid';
+        option.text = 'ID de Registro (Clave Única)';
+        searchType.add(option, searchType.options[0]); // Agregar al inicio
+        searchType.value = 'dbid'; // Seleccionar por defecto
+    }
+    // Si NO es admin, la opción 'dbid' NO existe en el HTML original, así que no hay que borrarla.
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         // ... (Lógica de búsqueda AJAX idéntica) ...
         const type = searchType.value;
         const value = searchValue.value;
-        
+
         resultsContainer.innerHTML = '';
         foundCountDiv.innerHTML = 'Buscando...';
 
@@ -116,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
             foundCountDiv.innerHTML = '';
             console.error('Fetch error:', error);
         }
-        
+
     });
 
     function renderResults(data) {
@@ -137,24 +148,27 @@ document.addEventListener('DOMContentLoaded', () => {
     function createPackageCard(pkg, isAdmin) {
         const fechaRecepcion = pkg.fecha_recepcion && pkg.fecha_recepcion !== 'N/A' ? pkg.fecha_recepcion.substring(0, 10) : 'N/A';
         const fechaEnvio = pkg.fecha_envio && pkg.fecha_envio !== 'N/A' ? pkg.fecha_envio.substring(0, 10) : 'N/A';
-        
-        const imageUrl = pkg.imagen_link; 
+
+        const imageUrl = pkg.imagen_link;
         const estado = pkg.estado || 'Estado No Definido';
         const isErrorImage = !imageUrl || imageUrl === 'N/A';
-        
-        const imageHtml = isErrorImage 
+
+        const imageHtml = isErrorImage
             ? `<div class="image-section">Error al cargar la imagen</div>`
             : `<div class="image-section" style="background-color: #f0f8ff;">
                 <p><a href="${imageUrl}" target="_blank">(Clic para Abrir Foto)</a></p>
                </div>`;
-        
+
         // Función para aplicar la edición condicional
         const editableAttr = (field, value) => isAdmin ? `class="editable" onclick="quickEdit(${pkg.id}, '${field}', '${value}')"` : '';
         const editableClass = isAdmin ? 'editable' : ''; // Solo para el estilo en la sección de estado
 
         return `
             <div class="package-card">
-                <div class="card-title">Paquete: ${pkg.numero_seguimiento || 'N/A'}</div>
+                <div class="card-title">
+                    Paquete: ${pkg.numero_seguimiento || 'N/A'}
+                    <span class="db-id-tag">ID: ${pkg.id}</span>
+                </div>
 
                 <p>Imagen de Paquete Recibido: ${isErrorImage ? '' : `<a href="${imageUrl}" target="_blank">(Clic para Abrir)</a>`}</p>
                 
