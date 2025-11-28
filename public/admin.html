@@ -42,10 +42,28 @@
                 </div>
                 <button type="submit" id="search-button">Buscar Paquete</button>
             </form>
-            <div id="found-count"></div>
         </div>
 
-        <!-- Contenedor donde se inyectarán los resultados de la búsqueda -->
+        <!-- SECCIÓN DE FILTRADO POR ESTADO (NUEVA) -->
+        <div class="search-container" style="margin-top: 20px; border-top: 2px dashed #eee; padding-top: 20px;">
+            <h3>Gestión Masiva por Estado</h3>
+            <div class="input-group">
+                <label for="filter-state">Filtrar por Estado:</label>
+                <select id="filter-state">
+                    <option value="">-- Seleccione un Estado --</option>
+                    <option value="RECIBIDO EN CUCUTA">RECIBIDO EN CUCUTA</option>
+                    <option value="ENVIADO A TACHIRA">ENVIADO A TACHIRA</option>
+                    <option value="ENVIADO A CLIENTE">ENVIADO A CLIENTE</option>
+                </select>
+                <button id="filter-button" style="margin-top: 10px; width: 100%; background-color: #28a745;">Ver en Tabla</button>
+            </div>
+        </div>
+
+        <!-- Contenedor para la TABLA de resultados -->
+        <div id="admin-table-container" style="margin-top: 20px; overflow-x: auto;"></div>
+
+        <!-- Contenedor donde se inyectarán los resultados de la búsqueda (Card View) -->
+        <div id="found-count"></div>
         <div id="results-container">
             <!-- La lógica de app.js detectará que está en /admin y activará los clicks de edición -->
         </div>
