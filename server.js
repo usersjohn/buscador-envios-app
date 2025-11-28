@@ -5,7 +5,8 @@ const path = require('path');
 const cookieParser = require('cookie-parser'); 
 
 // --- CONFIGURACIÓN DE SEGURIDAD ---
-const ADMIN_PASSWORD = "TU_CONTRASEÑA_SECRETA_ADMIN"; 
+// CRÍTICO: La contraseña debe leerse desde la variable de entorno de Railway
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD; 
 const SESSION_COOKIE_NAME = 'admin_session';
 
 // --- 1. Inicialización de Express (CRÍTICO: El orden es vital) ---
@@ -26,6 +27,12 @@ app.use(cookieParser());
 
 // --- FUNCIÓN DE VERIFICACIÓN DE SESIÓN (Middleware) ---
 const requireAdmin = (req, res, next) => {
+    // Si la variable de entorno no está configurada, el login fallará
+    if (!ADMIN_PASSWORD) {
+        console.error('ERROR DE SEGURIDAD: ADMIN_PASSWORD no configurada en Railway.');
+        return res.status(500).send('ERROR: La clave de administración no está configurada.');
+    }
+    
     if (req.cookies[SESSION_COOKIE_NAME] === ADMIN_PASSWORD) {
         return next();
     }
@@ -93,6 +100,12 @@ app.get('/admin-login', (req, res) => {
 
 // Procesar Login (Público)
 app.post('/admin-login', (req, res) => {
+    // Si la variable de entorno no está configurada, el login fallará
+    if (!ADMIN_PASSWORD) {
+        console.error('ERROR DE SEGURIDAD: ADMIN_PASSWORD no configurada en Railway.');
+        return res.status(500).send('ERROR: La clave de administración no está configurada en el servidor.');
+    }
+    
     const { password } = req.body;
     if (password === ADMIN_PASSWORD) {
         res.cookie(SESSION_COOKIE_NAME, ADMIN_PASSWORD, { maxAge: 3600000, httpOnly: true }); 
@@ -133,15 +146,3 @@ app.post('/api/update', requireAdmin, async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
-```
-eof
-
-### 3. Pasos para Corregir el Despliegue
-
-1.  **Edita `package.json`:** Asegúrate de que tu `package.json` local sea idéntico al que está en el Canvas ahora (incluyendo `cookie-parser`).
-2.  **Edita `server.js`:** Reemplaza el contenido completo con el código del Canvas.
-3.  **Subir la Corrección:**
-    ```bash
-    git add package.json server.js
-    git commit -m "Fix: Solucionado error 'Cannot find module cookie-parser' y verificado el método GET"
-    git push origin main
