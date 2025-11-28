@@ -37,7 +37,6 @@ function validateAndFormat(field, value) {
 
 // --- LÓGICA DE EDICIÓN RÁPIDA (CRUD UPDATE) ---
 function quickEdit(id, currentField, currentValue) {
-    // Si es el campo 'estado', usamos una lógica diferente (Dropdown)
     if (currentField === 'estado') {
         updateStatus(id, currentValue);
         return;
@@ -60,45 +59,9 @@ function quickEdit(id, currentField, currentValue) {
     saveUpdate(id, currentField, validatedValue);
 }
 
-// Nueva función para actualizar el estado con un dropdown (simulado con prompt por ahora, o mejor, un confirm/select)
-// Para simplificar y cumplir con el requerimiento de "lista desplegable", usaremos un prompt especial o inyectaremos HTML.
-// Dado que `prompt` no soporta dropdowns, usaremos un enfoque de inyección de HTML temporal o un simple prompt con opciones numéricas si fuera texto,
-// PERO el requerimiento dice "lista desplegable (no un prompt de texto)".
-// La mejor forma sin librerías externas es usar un `prompt` que pida 1, 2 o 3, O MEJOR AÚN:
-// Cambiar el contenido de la celda a un <select> temporalmente.
 function updateStatus(id, currentStatus) {
-    // Implementación simple: Usar un prompt con opciones predefinidas si no queremos complicar el DOM,
-    // PERO el usuario pidió explícitamente "lista desplegable".
-    // Vamos a hacer que al hacer clic, se reemplace el texto por un select.
-    // Como `quickEdit` se llama desde `onclick`, necesitamos saber qué elemento fue clickeado.
-    // Para simplificar, vamos a usar un `prompt` personalizado o simplemente un `confirm` en cadena? No.
-    // Vamos a usar la inyección de HTML en el elemento padre.
-    // Sin embargo, `quickEdit` no recibe el elemento.
-    // Vamos a cambiar la estrategia: `quickEdit` pedirá el nuevo valor usando un prompt con instrucciones claras
-    // O, para cumplir estrictamente, podríamos hacer un modal.
-    // VOY A IMPLEMENTAR UN "PROMPT" BASADO EN SELECT USANDO UN MODAL NATIVO O UN TRUCO.
-    // REALIDAD: Para no romper el flujo, voy a usar un `prompt` que liste las opciones y pida escribir el nombre EXACTO o un número.
-    // ESPERA, el usuario dijo "no un prompt de texto".
-    // Entonces, en la vista de tabla, el estado YA DEBERÍA SER UN SELECT.
-    // En la vista de tarjeta, al hacer clic, podríamos mostrar un div flotante con las opciones.
-
-    // SOLUCIÓN ROBUSTA: Crear un overlay simple con los 3 botones.
     const options = ['RECIBIDO EN CUCUTA', 'ENVIADO A TACHIRA', 'ENVIADO A CLIENTE'];
     let optionList = options.map((opt, index) => `${index + 1}. ${opt}`).join('\n');
-
-    // Fallback a prompt numérico por simplicidad si no hay modal, pero intentemos ser creativos.
-    // Vamos a usar `prompt` pero pidiendo el número. Es lo más cercano sin UI compleja.
-    // RE-LEER: "El campo Estado Actual debe ser modificado rápidamente con una lista desplegable"
-    // En la TABLA, pondré un <select> directamente.
-    // En la TARJETA, al hacer clic, cambiaré el `span` por un `select` y un botón `guardar`.
-
-    // Como no tengo referencia al elemento DOM en `quickEdit(id, field, value)`, necesito pasarlo.
-    // Voy a modificar `createPackageCard` para pasar `this` a `quickEdit`.
-    // Pero `quickEdit` está en el ámbito global.
-
-    // VOY A SIMPLIFICAR: Usar un prompt que pida el número de la opción.
-    // "1: RECIBIDO..., 2: ENVIADO..., 3: ENVIADO..."
-    // Es rápido y efectivo.
 
     const selection = prompt(`Seleccione el nuevo estado para el ID ${id}:\n\n${optionList}\n\nIngrese el número de la opción:`);
 
@@ -122,18 +85,9 @@ function saveUpdate(id, field, value) {
         .then(data => {
             if (data.success) {
                 alert(`✅ Actualización de '${field}' exitosa!`);
-                // Recargar solo si es necesario, o actualizar el DOM.
-                // Para la tabla, podríamos recargar la tabla.
-                // Para la tarjeta, recargar la página.
-                // Vamos a recargar la página para asegurar consistencia.
-                // Si estamos en modo tabla, quizás solo recargar la tabla?
-                // Por simplicidad: reload.
-                // MEJORA: Si hay un filtro activo, recargar manteniendo el filtro?
-                // window.location.reload() pierde el estado del filtro.
-                // Vamos a intentar recargar la búsqueda/filtro.
                 const filterState = document.getElementById('filter-state');
                 if (filterState && filterState.value) {
-                    document.getElementById('filter-button').click(); // Re-trigger filter
+                    document.getElementById('filter-button').click();
                 } else {
                     window.location.reload();
                 }
@@ -144,6 +98,32 @@ function saveUpdate(id, field, value) {
         .catch(error => {
             console.error('Error de red:', error);
             alert('❌ Error de conexión al servidor.');
+        });
+}
+
+// --- LÓGICA DE ELIMINACIÓN ---
+function deletePackage(id) {
+    if (!confirm("¿Está seguro de eliminar este registro? Esta acción no se puede deshacer.")) {
+        return;
+    }
+
+    fetch('/api/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("✅ Registro eliminado exitosamente.");
+                window.location.reload();
+            } else {
+                alert(`❌ Error al eliminar: ${data.error}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Error de conexión.');
         });
 }
 
@@ -160,6 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterButton = document.getElementById('filter-button');
     const filterStateSelect = document.getElementById('filter-state');
     const adminTableContainer = document.getElementById('admin-table-container');
+    const createForm = document.getElementById('create-form');
 
     // Detectar si estamos en la vista de ADMINISTRACIÓN o PÚBLICA
     const isAdminView = window.location.pathname.startsWith('/admin');
@@ -183,8 +164,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 foundCountDiv.innerHTML = 'Cargando tabla...';
-                resultsContainer.innerHTML = ''; // Limpiar tarjetas
-                adminTableContainer.innerHTML = ''; // Limpiar tabla previa
+                resultsContainer.innerHTML = '';
+                adminTableContainer.innerHTML = '';
 
                 try {
                     const response = await fetch(`/api/filter-by-state?state=${encodeURIComponent(state)}`);
@@ -203,6 +184,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
+
+        // Listener para el formulario de creación
+        if (createForm) {
+            createForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(createForm);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch('/api/create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        alert(`✅ Envío creado con ID: ${result.id}`);
+                        createForm.reset();
+                    } else {
+                        alert(`❌ Error al crear: ${result.error}`);
+                    }
+                } catch (error) {
+                    console.error('Error creando:', error);
+                    alert('❌ Error de conexión.');
+                }
+            });
+        }
     }
 
     form.addEventListener('submit', async (e) => {
@@ -211,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const value = searchValue.value;
 
         resultsContainer.innerHTML = '';
-        if (adminTableContainer) adminTableContainer.innerHTML = ''; // Limpiar tabla si busca normal
+        if (adminTableContainer) adminTableContainer.innerHTML = '';
         foundCountDiv.innerHTML = 'Buscando...';
 
         try {
@@ -276,7 +285,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${pkg.codigo_ddp}</td>
                     <td>${pkg.peso}</td>
                     <td class="editable ${statusClass}" onclick="quickEdit(${pkg.id}, 'estado', '${pkg.estado}')" style="font-weight:bold;">${pkg.estado}</td>
-                    <td><button onclick="quickEdit(${pkg.id}, 'estado', '${pkg.estado}')">Cambiar Estado</button></td>
+                    <td>
+                        <button onclick="quickEdit(${pkg.id}, 'estado', '${pkg.estado}')">Estado</button>
+                        <button class="delete-btn" onclick="deletePackage(${pkg.id})">Borrar</button>
+                    </td>
                 </tr>
             `;
         });
@@ -295,7 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Función que construye la tarjeta de resultado
     function createPackageCard(pkg, isAdmin) {
         const fechaRecepcion = pkg.fecha_recepcion && pkg.fecha_recepcion !== 'N/A' ? pkg.fecha_recepcion.substring(0, 10) : 'N/A';
-        // ELIMINADO: fechaEnvio según requerimiento
 
         const imageUrl = pkg.imagen_link;
         const estado = pkg.estado || 'Estado No Definido';
@@ -327,13 +338,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="detail-value" ${editableAttr('nombre_receptor', pkg.nombre_receptor)}>${pkg.nombre_receptor}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">Código DDP (Ref.):</span>
+                    <span class="detail-label">Código DDP:</span> <!-- RENAMED: removed (Ref.) -->
                     <span class="detail-value" ${editableAttr('codigo_ddp', pkg.codigo_ddp)}>${pkg.codigo_ddp}</span>
                 </div>
                 
                 <div class="detail-row">
                     <span class="detail-label">Peso:</span>
-                    <span class="detail-value" ${editableAttr('peso', pkg.peso)}>${pkg.peso} kg</span> <!-- Solo KG -->
+                    <span class="detail-value" ${editableAttr('peso', pkg.peso)}>${pkg.peso} kg</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Contenido:</span>
@@ -353,10 +364,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="detail-label">Fecha de Recepción:</span>
                     <span class="detail-value" ${editableAttr('fecha_recepcion', fechaRecepcion)}>${fechaRecepcion}</span>
                 </div>
-                <!-- ELIMINADO: Fecha de Envío/Emisión -->
                 
                 <div class="detail-row">
-                    <span class="detail-label">Valor de la Mercancía:</span> <!-- RENAMED -->
+                    <span class="detail-label">Valor de la Mercancía:</span>
                     <span class="detail-value" ${editableAttr('costo', pkg.costo)}>${pkg.moneda_costo || 'N/A'} ${pkg.costo}</span>
                 </div>
                 

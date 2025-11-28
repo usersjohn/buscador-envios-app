@@ -224,6 +224,38 @@ h1 {
     color: white;
 }
 
+/* --- CREATE FORM STYLES --- */
+#create-form input,
+#create-form select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+#create-form button {
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* --- DELETE BUTTON --- */
+.delete-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+}
+
+.delete-btn:hover {
+    background-color: #c82333;
+}
+
 /* --- Responsive Layout --- */
 @media (max-width: 500px) {
     .main-container {
@@ -239,5 +271,15 @@ h1 {
 
     .input-group {
         grid-column: span 1;
+    }
+
+    #create-form {
+        grid-template-columns: 1fr !important;
+    }
+
+    #create-form input[style*="span 2"],
+    #create-form select[style*="span 2"],
+    #create-form button[style*="span 2"] {
+        grid-column: span 1 !important;
     }
 }

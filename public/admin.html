@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>ADMINISTRACIÓN | Corrección de Envíos</title>
@@ -8,7 +9,7 @@
     <style>
         /* Estilos específicos para la vista de administrador */
         .admin-header {
-            background-color: #ffcc00; 
+            background-color: #ffcc00;
             color: #333;
             padding: 10px;
             text-align: center;
@@ -18,15 +19,43 @@
         }
     </style>
 </head>
+
 <body>
     <div class="main-container">
         <header>
             <div class="logo-placeholder">
-                <img src="/logo.png" alt="Logo de la Empresa" id="custom-logo"> 
+                <img src="/logo.png" alt="Logo de la Empresa" id="custom-logo">
             </div>
             <h1>Portal de Corrección de Datos</h1>
             <div class="admin-header">¡MODO ADMINISTRADOR ACTIVO! Los datos son editables al hacer clic.</div>
         </header>
+
+        <div class="search-container"
+            style="border-bottom: 2px dashed #eee; padding-bottom: 20px; margin-bottom: 20px;">
+            <h3>Crear Nuevo Envío</h3>
+            <form id="create-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <input type="text" name="numero_seguimiento" placeholder="Tracking" required>
+                <input type="text" name="codigo_ddp" placeholder="Código DDP" required>
+                <input type="text" name="nombre_receptor" placeholder="Receptor" required>
+                <input type="number" step="0.01" name="peso" placeholder="Peso (Kg)" required>
+                <input type="text" name="contenido" placeholder="Contenido">
+                <input type="text" name="empresa_transporte" placeholder="Transportista">
+                <input type="text" name="proveedor" placeholder="Proveedor">
+                <input type="date" name="fecha_recepcion" placeholder="Fecha Recepción">
+                <input type="number" step="0.01" name="costo" placeholder="Valor Mercancía">
+                <select name="moneda_costo">
+                    <option value="USD">USD</option>
+                    <option value="COP">COP</option>
+                </select>
+                <input type="text" name="imagen_link" placeholder="Link Imagen" style="grid-column: span 2;">
+                <select name="estado" style="grid-column: span 2;">
+                    <option value="RECIBIDO EN CUCUTA">RECIBIDO EN CUCUTA</option>
+                    <option value="ENVIADO A TACHIRA">ENVIADO A TACHIRA</option>
+                    <option value="ENVIADO A CLIENTE">ENVIADO A CLIENTE</option>
+                </select>
+                <button type="submit" style="grid-column: span 2; background-color: #28a745;">Crear Envío</button>
+            </form>
+        </div>
 
         <div class="search-container">
             <form id="search-form">
@@ -55,7 +84,8 @@
                     <option value="ENVIADO A TACHIRA">ENVIADO A TACHIRA</option>
                     <option value="ENVIADO A CLIENTE">ENVIADO A CLIENTE</option>
                 </select>
-                <button id="filter-button" style="margin-top: 10px; width: 100%; background-color: #28a745;">Ver en Tabla</button>
+                <button id="filter-button" style="margin-top: 10px; width: 100%; background-color: #28a745;">Ver en
+                    Tabla</button>
             </div>
         </div>
 
@@ -70,5 +100,5 @@
     </div>
     <script src="app.js"></script>
 </body>
-</html>
 
+</html>
