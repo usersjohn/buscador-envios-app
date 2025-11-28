@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Buscador de Envíos - Sistema Automatizado</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+        input[type="text"] { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>📦 Buscar Envíos por Tracking/Nombre</h1>
+    <p>Ingresa el número de seguimiento o el nombre del receptor (en MAYÚSCULAS) para consultar la base de datos.</p>
+
+    <form action="/search" method="POST">
+        <label for="tracking_number">Número de Seguimiento o Nombre:</label>
+        <input type="text" id="tracking_number" name="tracking_number" required>
+        <button type="submit">Buscar</button>
+    </form>
+</body>
+</html>
