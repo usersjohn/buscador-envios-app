@@ -2,21 +2,41 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Buscador de Envíos - Sistema Automatizado</title>
-    <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
-        input[type="text"] { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
-    </style>
+    <title>Consulta de Envíos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="styles.css" rel="stylesheet">
 </head>
 <body>
-    <h1>📦 Buscar Envíos por Tracking/Nombre</h1>
-    <p>Ingresa el número de seguimiento o el nombre del receptor (en MAYÚSCULAS) para consultar la base de datos.</p>
+    <div class="main-container">
+        <header>
+            <div class="logo-placeholder">
+                <img src="/logo.png" alt="Logo de la Empresa" id="custom-logo"> 
+            </div>
+            <h1>Consulta el estado detallado de tu envío</h1>
+        </header>
 
-    <form action="/search" method="POST">
-        <label for="tracking_number">Número de Seguimiento o Nombre:</label>
-        <input type="text" id="tracking_number" name="tracking_number" required>
-        <button type="submit">Buscar</button>
-    </form>
+        <div class="search-container">
+            <form id="search-form">
+                <div class="input-group">
+                    <label for="search-type">Buscar por:</label>
+                    <select id="search-type" name="type">
+                        <option value="ddp">Código DDP (Ref.)</option>
+                        <option value="tracking">Número de Seguimiento</option>
+                        <option value="receptor">Nombre y Apellido</option>
+                    </select>
+                </div>
+                <div class="input-group value-input">
+                    <label for="search-value">Valor a Buscar:</label>
+                    <input type="text" id="search-value" name="value" placeholder="31040006" required>
+                </div>
+                <button type="submit" id="search-button">Buscar Paquete</button>
+            </form>
+            <div id="found-count"></div>
+        </div>
+
+        <div id="results-container">
+            </div>
+    </div>
+    <script src="app.js"></script>
 </body>
 </html>

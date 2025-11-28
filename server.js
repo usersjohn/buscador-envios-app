@@ -1,60 +1,40 @@
-// server.js
-const express = require('express');
-const { Pool } = require('pg');
-const path = require('path');
+// server.js (Sólo la parte de la consulta, el resto del código es igual)
+// ... (código Express y Pool) ...
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Configuración de PostgreSQL. Railway inyecta esta variable de forma automática.
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
-});
-
-// Middleware para servir archivos estáticos (como index.html)
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.urlencoded({ extended: true })); // Para leer datos del formulario
-
-// 1. Ruta principal: Sirve la página de búsqueda
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// 2. Ruta de Búsqueda: Ejecuta la consulta a la base de datos
-app.post('/search', async (req, res) => {
-    const searchTerm = req.body.tracking_number.trim();
-
-    if (!searchTerm) {
-        return res.redirect('/');
-    }
+// --- API de Búsqueda ---
+app.get('/api/search', async (req, res) => {
+    // ... (manejo de parámetros y errores) ...
 
     try {
-        const client = await pool.connect();
-        // Consulta SQL para buscar por numero_seguimiento o nombre
-        // Usamos ILIKE para buscar sin distinguir mayúsculas/minúsculas
-        const result = await client.query(
-            `SELECT * FROM envios 
-             WHERE numero_seguimiento = $1 OR nombre_receptor ILIKE $1`,
-            [searchTerm.toUpperCase()] // Convertimos a mayúsculas para buscar en la DB
-        );
-        client.release();
+        // La consulta ahora incluye el campo 'imagen_link'
+        let query = `SELECT id, imagen_link, numero_seguimiento, nombre_receptor, codigo_ddp, costo, moneda_costo, fecha_envio, fecha_recepcion, empresa_transporte, proveedor, contenido, peso, estado FROM envios WHERE `;
+        let params = [searchTerm];
 
-        // Renderizar los resultados (los envia de vuelta al cliente)
-        res.send(`
-            <h2>Resultados de Búsqueda: "${searchTerm}"</h2>
-            <p><a href="/">Nueva Búsqueda</a></p>
-            <pre>${JSON.stringify(result.rows, null, 2)}</pre>
-        `);
+        switch (type) {
+            case 'tracking':
+                query += `numero_seguimiento = $1`;
+                break;
+            case 'ddp':
+                const cleanDDP = searchTerm.replace(/[^0-9]/g, '');
+                query += `codigo_ddp = $1`;
+                params = [cleanDDP];
+                break;
+            case 'receptor':
+                query += `nombre_receptor ILIKE $1`;
+                params = [`%${searchTerm}%`];
+                break;
+            default:
+                return res.status(400).json({ error: 'Tipo de búsqueda no válido.' });
+        }
+
+        const result = await pool.query(query, params);
+        res.json({
+            count: result.rows.length,
+            packages: result.rows
+        });
 
     } catch (err) {
-        console.error('Error al ejecutar la consulta', err);
-        res.status(500).send('Error interno del servidor.');
+        // ... (manejo de errores) ...
     }
 });
-
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
+// ... (código app.listen) ...
