@@ -352,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 
                 <div class="detail-row">
-                    <span class="detail-label">Empresa de Transporte (Origen):</span>
+                    <span class="detail-label">Empresa de Transporte:</span>
                     <span class="detail-value" ${editableAttr('empresa_transporte', pkg.empresa_transporte)}>${pkg.empresa_transporte}</span>
                 </div>
                 <div class="detail-row">
