@@ -334,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${imageHtml}
                 
                 <div class="detail-row">
-                    <span class="detail-label">Cliente/Receptor:</span>
+                    <span class="detail-label">Cliente:</span>
                     <span class="detail-value" ${editableAttr('nombre_receptor', pkg.nombre_receptor)}>${pkg.nombre_receptor}</span>
                 </div>
                 <div class="detail-row">
@@ -352,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 
                 <div class="detail-row">
-                    <span class="detail-label">Transportista (Origen):</span>
+                    <span class="detail-label">Empresa de Transporte (Origen):</span>
                     <span class="detail-value" ${editableAttr('empresa_transporte', pkg.empresa_transporte)}>${pkg.empresa_transporte}</span>
                 </div>
                 <div class="detail-row">

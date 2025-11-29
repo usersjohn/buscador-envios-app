@@ -32,12 +32,12 @@ header {
 }
 
 .logo-placeholder {
-    height: 60px;
+    height: 80px;
     margin-bottom: 10px;
 }
 
 #custom-logo {
-    max-width: 120px;
+    max-width: 150px;
     height: auto;
 }
 
