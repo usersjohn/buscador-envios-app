@@ -1,244 +1,520 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin | Gestión de Envíos</title>
-
-    <!-- Google Font: Source Sans Pro -->
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- DataTables -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap4.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap4.min.css">
-    <!-- Theme style -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Administración</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .editable-cell {
-            cursor: pointer;
-            color: #007bff;
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --bg: #f1f5f9;
+            --surface: #ffffff;
+            --text: #0f172a;
+            --text-light: #64748b;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background-color: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: var(--text-light);
+            text-decoration: none;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s;
             font-weight: 500;
         }
 
-        .editable-cell:hover {
-            text-decoration: underline;
-            color: #0056b3;
+        .nav-item:hover, .nav-item.active {
+            background-color: #eff6ff;
+            color: var(--primary);
+        }
+
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+            margin-right: 0.75rem;
+        }
+
+        /* Main Content */
+        .main {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .title {
+            font-size: 1.875rem;
+            font-weight: 700;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-outline:hover {
+            background-color: #f8fafc;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        /* Cards */
+        .card {
+            background-color: var(--surface);
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 1rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-light);
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.875rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .badge {
+            display: inline-flex;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-warning {
+            background-color: #fef9c3;
+            color: #854d0e;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--surface);
+            border-radius: 1rem;
+            padding: 2rem;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.625rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-family: inherit;
+            font-size: 0.875rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .search-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
     </style>
 </head>
-
-<body class="hold-transition sidebar-mini">
-    <div class="wrapper">
-        <!-- Navbar -->
-        <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-            <!-- Left navbar links -->
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
-                </li>
-                <li class="nav-item d-none d-sm-inline-block">
-                    <a href="/" class="nav-link">Ver Sitio Público</a>
-                </li>
-            </ul>
-        </nav>
-        <!-- /.navbar -->
-
-        <!-- Main Sidebar Container -->
-        <aside class="main-sidebar sidebar-dark-primary elevation-4">
-            <!-- Brand Logo -->
-            <a href="#" class="brand-link">
-                <span class="brand-text font-weight-light">Admin Envíos</span>
-            </a>
-
-            <!-- Sidebar -->
-            <div class="sidebar">
-                <!-- Sidebar Menu -->
-                <nav class="mt-2">
-                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
-                        data-accordion="false">
-                        <li class="nav-item">
-                            <a href="#" class="nav-link active">
-                                <i class="nav-icon fas fa-tachometer-alt"></i>
-                                <p>Dashboard</p>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-                <!-- /.sidebar-menu -->
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="logo">
+                📦 AdminPortal
             </div>
-            <!-- /.sidebar -->
+            <nav>
+                <a href="#" class="nav-item active">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                    Envíos
+                </a>
+                <a href="http://localhost:5050" target="_blank" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                    pgAdmin 4
+                </a>
+            </nav>
         </aside>
 
-        <!-- Content Wrapper. Contains page content -->
-        <div class="content-wrapper">
-            <!-- Content Header (Page header) -->
-            <section class="content-header">
-                <div class="container-fluid">
-                    <div class="row mb-2">
-                        <div class="col-sm-6">
-                            <h1>Gestión de Envíos</h1>
-                        </div>
-                    </div>
-                </div><!-- /.container-fluid -->
-            </section>
-
-            <!-- Main content -->
-            <section class="content">
-                <div class="container-fluid">
-
-                    <!-- CREATE SHIPMENT CARD -->
-                    <div class="card card-success collapsed-card">
-                        <div class="card-header">
-                            <h3 class="card-title"><i class="fas fa-plus-circle"></i> Crear Nuevo Envío</h3>
-                            <div class="card-tools">
-                                <button type="button" class="btn btn-tool" data-card-widget="collapse"><i
-                                        class="fas fa-plus"></i></button>
-                            </div>
-                        </div>
-                        <!-- /.card-header -->
-                        <div class="card-body">
-                            <form id="create-form">
-                                <div class="row">
-                                    <div class="col-md-3 form-group">
-                                        <label>Tracking</label>
-                                        <input type="text" class="form-control" name="numero_seguimiento"
-                                            placeholder="Ej: 1Z999..." required>
-                                    </div>
-                                    <div class="col-md-3 form-group">
-                                        <label>Código DDP</label>
-                                        <input type="text" class="form-control" name="codigo_ddp"
-                                            placeholder="Ej: DDP-123" required>
-                                    </div>
-                                    <div class="col-md-3 form-group">
-                                        <label>Receptor</label>
-                                        <input type="text" class="form-control" name="nombre_receptor"
-                                            placeholder="Nombre Completo" required>
-                                    </div>
-                                    <div class="col-md-3 form-group">
-                                        <label>Peso (Kg)</label>
-                                        <input type="number" step="0.01" class="form-control" name="peso"
-                                            placeholder="0.00" required>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-3 form-group">
-                                        <label>Contenido</label>
-                                        <input type="text" class="form-control" name="contenido"
-                                            placeholder="Descripción">
-                                    </div>
-                                    <div class="col-md-3 form-group">
-                                        <label>Transportista</label>
-                                        <input type="text" class="form-control" name="empresa_transporte"
-                                            placeholder="Ej: Amazon">
-                                    </div>
-                                    <div class="col-md-3 form-group">
-                                        <label>Proveedor</label>
-                                        <input type="text" class="form-control" name="proveedor"
-                                            placeholder="Tienda de origen">
-                                    </div>
-                                    <div class="col-md-3 form-group">
-                                        <label>Fecha Recepción</label>
-                                        <input type="date" class="form-control" name="fecha_recepcion">
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-3 form-group">
-                                        <label>Valor Mercancía</label>
-                                        <input type="number" step="0.01" class="form-control" name="costo"
-                                            placeholder="0.00">
-                                    </div>
-                                    <div class="col-md-3 form-group">
-                                        <label>Moneda</label>
-                                        <select class="form-control" name="moneda_costo">
-                                            <option value="USD">USD</option>
-                                            <option value="COP">COP</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6 form-group">
-                                        <label>Link Imagen</label>
-                                        <input type="text" class="form-control" name="imagen_link"
-                                            placeholder="https://...">
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-12 form-group">
-                                        <label>Estado Inicial</label>
-                                        <select class="form-control" name="estado">
-                                            <option value="RECIBIDO EN CUCUTA">RECIBIDO EN CUCUTA</option>
-                                            <option value="ENVIADO A TACHIRA">ENVIADO A TACHIRA</option>
-                                            <option value="ENVIADO A CLIENTE">ENVIADO A CLIENTE</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <button type="submit" class="btn btn-success btn-block">Guardar Envío</button>
-                            </form>
-                        </div>
-                        <!-- /.card-body -->
-                    </div>
-                    <!-- /.card -->
-
-                    <!-- DATA TABLE CARD -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Listado Maestro de Envíos</h3>
-                        </div>
-                        <!-- /.card-header -->
-                        <div class="card-body">
-                            <table id="shipmentsTable" class="table table-bordered table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Tracking</th>
-                                        <th>Receptor</th>
-                                        <th>DDP</th>
-                                        <th>Peso</th>
-                                        <th>Estado</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Data loaded via AJAX -->
-                                </tbody>
-                            </table>
-                        </div>
-                        <!-- /.card-body -->
-                    </div>
-                    <!-- /.card -->
-
-                </div>
-                <!-- /.container-fluid -->
-            </section>
-            <!-- /.content -->
-        </div>
-        <!-- /.content-wrapper -->
-        <footer class="main-footer">
-            <div class="float-right d-none d-sm-block">
-                <b>Version</b> 2.0.0
+        <main class="main">
+            <div class="header">
+                <h1 class="title">Gestión de Envíos</h1>
+                <button class="btn btn-primary" onclick="openModal()">+ Nuevo Envío</button>
             </div>
-            <strong>Copyright &copy; 2023.</strong> All rights reserved.
-        </footer>
 
+            <div class="card">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Buscar por tracking, receptor, DDP..." onkeyup="searchPackages()">
+                    <select id="searchType" class="form-control" style="width: 200px;">
+                        <option value="tracking">Tracking</option>
+                        <option value="receptor">Receptor</option>
+                        <option value="ddp">DDP</option>
+                    </select>
+                </div>
+
+                <div class="table-container">
+                    <table id="packagesTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tracking</th>
+                                <th>Receptor</th>
+                                <th>DDP</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
     </div>
-    <!-- ./wrapper -->
 
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Bootstrap 4 -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- DataTables  & Plugins -->
-    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap4.min.js"></script>
-    <!-- AdminLTE App -->
-    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
-    <!-- Custom App Logic -->
-    <script src="app.js"></script>
+    <!-- Modal -->
+    <div class="modal" id="shipmentModal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 1.5rem;" id="modalTitle">Nuevo Envío</h2>
+            <form id="shipmentForm" onsubmit="handleFormSubmit(event)">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label class="form-label">Número de Seguimiento</label>
+                    <input type="text" name="numero_seguimiento" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nombre Receptor</label>
+                    <input type="text" name="nombre_receptor" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Código DDP</label>
+                    <input type="text" name="codigo_ddp" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Estado</label>
+                    <select name="estado" class="form-control">
+                        <option value="RECIBIDO EN CUCUTA">RECIBIDO EN CUCUTA</option>
+                        <option value="EN TRANSITO">EN TRANSITO</option>
+                        <option value="ENTREGADO">ENTREGADO</option>
+                    </select>
+                </div>
+                <div class="actions" style="margin-top: 2rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Load data on start
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initial load - maybe load all or just show empty state
+            // For now let's try to load something if possible, or just wait for search
+            // Actually, let's load all by default if the API supports it, or just search for ' '
+             searchPackages(true);
+        });
+
+        async function searchPackages(isInitial = false) {
+            const value = isInitial ? ' ' : document.getElementById('searchInput').value;
+            const type = document.getElementById('searchType').value;
+            
+            if (!value && !isInitial) return;
+
+            // If value is empty space (initial load hack), we might need to adjust the API or just search for 'a' or something common if the API doesn't support list all.
+            // Looking at server.js, it requires a value.
+            // Let's try to search for something broad or just handle the UI.
+            // For this demo, let's assume the user types something.
+            
+            // Actually, let's modify the client to just search for " " (space) which might return everything if the SQL uses ILIKE with % %
+            // Server code: query += `nombre_receptor ILIKE $1`; params = [`%${searchTerm}%`];
+            // So if type is receptor and value is space, it matches everything.
+            
+            const effectiveValue = value || ' ';
+            const effectiveType = value ? type : 'receptor';
+
+            try {
+                const response = await fetch(`/api/search?type=${effectiveType}&value=${effectiveValue}`);
+                const data = await response.json();
+                
+                const tbody = document.querySelector('#packagesTable tbody');
+                tbody.innerHTML = '';
+
+                if (data.packages) {
+                    data.packages.forEach(pkg => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${pkg.id}</td>
+                            <td>${pkg.numero_seguimiento || '-'}</td>
+                            <td>${pkg.nombre_receptor || '-'}</td>
+                            <td>${pkg.codigo_ddp || '-'}</td>
+                            <td><span class="badge badge-success">${pkg.estado}</span></td>
+                            <td class="actions">
+                                <button class="btn btn-outline" style="padding: 0.25rem 0.5rem;" onclick='editPackage(${JSON.stringify(pkg)})'>✏️</button>
+                                <button class="btn btn-danger" style="padding: 0.25rem 0.5rem;" onclick="deletePackage(${pkg.id})">🗑️</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading packages:', error);
+            }
+        }
+
+        function openModal(pkg = null) {
+            const modal = document.getElementById('shipmentModal');
+            const form = document.getElementById('shipmentForm');
+            const title = document.getElementById('modalTitle');
+            
+            if (pkg) {
+                title.textContent = 'Editar Envío';
+                document.getElementById('editId').value = pkg.id;
+                form.numero_seguimiento.value = pkg.numero_seguimiento || '';
+                form.nombre_receptor.value = pkg.nombre_receptor || '';
+                form.codigo_ddp.value = pkg.codigo_ddp || '';
+                form.estado.value = pkg.estado || 'RECIBIDO EN CUCUTA';
+            } else {
+                title.textContent = 'Nuevo Envío';
+                document.getElementById('editId').value = '';
+                form.reset();
+            }
+            
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('shipmentModal').classList.remove('active');
+        }
+
+        function editPackage(pkg) {
+            openModal(pkg);
+        }
+
+        async function deletePackage(id) {
+            if (!confirm('¿Estás seguro de eliminar este envío?')) return;
+
+            try {
+                const response = await fetch('/api/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                
+                if (response.ok) {
+                    searchPackages();
+                } else {
+                    alert('Error al eliminar');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al eliminar');
+            }
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const id = document.getElementById('editId').value;
+            
+            const data = {
+                numero_seguimiento: form.numero_seguimiento.value,
+                nombre_receptor: form.nombre_receptor.value,
+                codigo_ddp: form.codigo_ddp.value,
+                estado: form.estado.value
+            };
+
+            try {
+                let url = '/api/create';
+                let method = 'POST';
+                
+                if (id) {
+                    // Update logic is a bit complex in server.js (field by field), 
+                    // but for this demo let's just support creating new ones easily.
+                    // The server.js update API is /api/update and takes {id, field, value}.
+                    // This means we have to make multiple calls or update server.js to support bulk update.
+                    // For now, let's just alert that update is limited or implement multiple calls.
+                    
+                    // Let's do multiple calls for the update
+                    const updates = [
+                        { field: 'numero_seguimiento', value: data.numero_seguimiento },
+                        { field: 'nombre_receptor', value: data.nombre_receptor },
+                        { field: 'codigo_ddp', value: data.codigo_ddp },
+                        { field: 'estado', value: data.estado }
+                    ];
+
+                    for (const update of updates) {
+                        await fetch('/api/update', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id, field: update.field, value: update.value })
+                        });
+                    }
+                    
+                    closeModal();
+                    searchPackages();
+                    return;
+                }
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal();
+                    searchPackages();
+                } else {
+                    alert('Error al guardar');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al guardar');
+            }
+        }
+    </script>
 </body>
-
 </html>
