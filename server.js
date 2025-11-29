@@ -1,8 +1,8 @@
+// server.js
 const express = require('express');
 const { Pool } = require('pg');
 const path = require('path');
 const cookieParser = require('cookie-parser');
-const expressLayouts = require('express-ejs-layouts');
 
 // --- CONFIGURACIÓN DE SEGURIDAD ---
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -23,11 +23,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
-// --- CONFIGURACIÓN DE EJS ---
-app.use(expressLayouts);
-app.set('view engine', 'ejs');
-app.set('layout', 'layouts/main');
 
 // --- FUNCIÓN DE VERIFICACIÓN DE SESIÓN (Middleware) ---
 const requireAdmin = (req, res, next) => {
@@ -149,7 +144,7 @@ app.post('/admin-login', (req, res) => {
 });
 
 app.get('/admin', requireAdmin, (req, res) => {
-    res.render('dashboard');
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // 3. API de Actualización (PROTEGIDA)

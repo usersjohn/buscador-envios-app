@@ -260,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!adminTableContainer) return;
 
         let tableHtml = `
-            <table class="admin-table">
+            <table class="table table-bordered table-striped">
                 <thead>
                     <tr>
                         <th>ID</th>
