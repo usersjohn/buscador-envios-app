@@ -177,6 +177,65 @@ app.post('/api/update', requireAdmin, async (req, res) => {
     }
 });
 
+// 4. API de Creación (PROTEGIDA)
+app.post('/api/create', requireAdmin, async (req, res) => {
+    const {
+        numero_seguimiento, codigo_ddp, nombre_receptor, peso, contenido,
+        empresa_transporte, proveedor, fecha_recepcion, costo, moneda_costo,
+        imagen_link, estado
+    } = req.body;
+
+    try {
+        const query = `
+            INSERT INTO envios (
+                numero_seguimiento, codigo_ddp, nombre_receptor, peso, contenido, 
+                empresa_transporte, proveedor, fecha_recepcion, costo, moneda_costo, 
+                imagen_link, estado
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            RETURNING id
+        `;
+
+        const values = [
+            numero_seguimiento || null,
+            codigo_ddp || null,
+            nombre_receptor || null,
+            peso || 0,
+            contenido || null,
+            empresa_transporte || null,
+            proveedor || null,
+            fecha_recepcion || null,
+            costo || 0,
+            moneda_costo || 'USD',
+            imagen_link || null,
+            estado || 'RECIBIDO EN CUCUTA'
+        ];
+
+        const result = await pool.query(query, values);
+        res.status(201).json({ success: true, id: result.rows[0].id, message: 'Envío creado exitosamente.' });
+
+    } catch (err) {
+        console.error('Error al crear envío:', err.message);
+        res.status(500).json({ success: false, error: `Error al crear: ${err.message}` });
+    }
+});
+
+// 5. API de Eliminación (PROTEGIDA)
+app.post('/api/delete', requireAdmin, async (req, res) => {
+    const { id } = req.body;
+    const recordId = parseInt(id, 10);
+
+    if (!recordId || recordId <= 0) {
+        return res.status(400).json({ success: false, error: 'ID inválido.' });
+    }
+
+    try {
+        await pool.query('DELETE FROM envios WHERE id = $1', [recordId]);
+        res.status(200).json({ success: true, message: 'Registro eliminado exitosamente.' });
+    } catch (err) {
+        console.error('Error al eliminar:', err.message);
+        res.status(500).json({ success: false, error: `Error al eliminar: ${err.message}` });
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
