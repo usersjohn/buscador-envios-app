@@ -99,29 +99,7 @@ app.get('/api/search', async (req, res) => {
 });
 
 
-// 2.1 API de Filtrado por Estado (Método GET)
-app.get('/api/filter-by-state', async (req, res) => {
-    const { state } = req.query;
-
-    if (!state) {
-        return res.status(400).json({ error: 'Falta el parámetro de estado.' });
-    }
-
-    try {
-        const query = `SELECT id, imagen_link, numero_seguimiento, nombre_receptor, codigo_ddp, costo, moneda_costo, fecha_envio, fecha_recepcion, empresa_transporte, proveedor, contenido, peso, estado FROM envios WHERE estado = $1`;
-        const result = await pool.query(query, [state]);
-
-        res.json({
-            count: result.rows.length,
-            packages: result.rows
-        });
-
-    } catch (err) {
-        console.error('Error al filtrar por estado:', err.message);
-        res.status(500).json({ error: 'Error al consultar la base de datos.' });
-    }
-});
-
+// 2.1 API de Filtrado por Estado (ELIMINADA - Manejado por DataTables)
 
 // --- RUTAS DE ADMINISTRACIÓN (PROTEGIDAS) ---
 
@@ -145,6 +123,23 @@ app.post('/admin-login', (req, res) => {
 
 app.get('/admin', requireAdmin, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// NUEVA API: Obtener todos los envíos para DataTables
+app.get('/api/admin/all-shipments', requireAdmin, async (req, res) => {
+    try {
+        const query = `SELECT id, imagen_link, numero_seguimiento, nombre_receptor, codigo_ddp, costo, moneda_costo, fecha_envio, fecha_recepcion, empresa_transporte, proveedor, contenido, peso, estado FROM envios ORDER BY id DESC`;
+        const result = await pool.query(query);
+
+        res.json({
+            count: result.rows.length,
+            packages: result.rows
+        });
+
+    } catch (err) {
+        console.error('Error al obtener todos los envíos:', err.message);
+        res.status(500).json({ error: 'Error al consultar la base de datos para la tabla de administración.' });
+    }
 });
 
 // 3. API de Actualización (PROTEGIDA)

@@ -1,191 +1,23 @@
-// public/app.js
+// public/app.js (Extracto de la refactorización para AdminLTE)
 
-// --- LÓGICA DE VALIDACIÓN ---
-function validateAndFormat(field, value) {
-    const trimmedValue = value.trim();
+// ... (Las funciones validateAndFormat, quickEdit, updateStatus, saveUpdate, deletePackage
+// deben permanecer igual, pero quizás usar jQuery para las alertas o modales de AdminLTE, 
+// lo cual no haremos aquí para mantener la compatibilidad con su código original).
 
-    // 1. Manejo de Fechas
-    if (field === 'fecha_envio' || field === 'fecha_recepcion') {
-        if (trimmedValue.toUpperCase() === 'N/A' || trimmedValue === '') {
-            return null;
-        }
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-        if (!dateRegex.test(trimmedValue)) {
-            alert(`Error: El campo de fecha (${field}) debe estar en formato YYYY-MM-DD o ser 'N/A'.`);
-            return false;
-        }
-        return trimmedValue;
-    }
-
-    // 2. Manejo de Números (Costo y Peso)
-    if (field === 'costo' || field === 'peso') {
-        const numericValue = parseFloat(trimmedValue);
-        if (isNaN(numericValue)) {
-            alert(`Error: El campo '${field}' debe ser un valor numérico.`);
-            return false;
-        }
-        return numericValue;
-    }
-
-    // 3. Manejo de Texto
-    if (field === 'nombre_receptor') {
-        return trimmedValue.toUpperCase();
-    }
-
-    return trimmedValue;
-}
-
-// --- LÓGICA DE EDICIÓN RÁPIDA (CRUD UPDATE) ---
-function quickEdit(id, currentField, currentValue) {
-    if (currentField === 'estado') {
-        updateStatus(id, currentValue);
-        return;
-    }
-
-    const newValue = prompt(
-        `Corregir campo '${currentField}' (ID: ${id}):\n\nValor actual: ${currentValue}\n\nIngrese nuevo valor:`
-    );
-
-    if (newValue === null) {
-        return;
-    }
-
-    const validatedValue = validateAndFormat(currentField, newValue);
-
-    if (validatedValue === false) {
-        return;
-    }
-
-    saveUpdate(id, currentField, validatedValue);
-}
-
-function updateStatus(id, currentStatus) {
-    const options = ['RECIBIDO EN CUCUTA', 'ENVIADO A TACHIRA', 'ENVIADO A CLIENTE'];
-    let optionList = options.map((opt, index) => `${index + 1}. ${opt}`).join('\n');
-
-    const selection = prompt(`Seleccione el nuevo estado para el ID ${id}:\n\n${optionList}\n\nIngrese el número de la opción:`);
-
-    if (!selection) return;
-
-    const index = parseInt(selection) - 1;
-    if (index >= 0 && index < options.length) {
-        saveUpdate(id, 'estado', options[index]);
-    } else {
-        alert("Opción inválida.");
-    }
-}
-
-function saveUpdate(id, field, value) {
-    fetch('/api/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, field, value }),
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(`✅ Actualización de '${field}' exitosa!`);
-                const filterState = document.getElementById('filter-state');
-                if (filterState && filterState.value) {
-                    document.getElementById('filter-button').click();
-                } else {
-                    window.location.reload();
-                }
-            } else {
-                alert(`❌ Error al guardar: ${data.error}`);
-            }
-        })
-        .catch(error => {
-            console.error('Error de red:', error);
-            alert('❌ Error de conexión al servidor.');
-        });
-}
-
-// --- LÓGICA DE ELIMINACIÓN ---
-function deletePackage(id) {
-    if (!confirm("¿Está seguro de eliminar este registro? Esta acción no se puede deshacer.")) {
-        return;
-    }
-
-    fetch('/api/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: id })
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert("✅ Registro eliminado exitosamente.");
-                window.location.reload();
-            } else {
-                alert(`❌ Error al eliminar: ${data.error}`);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('❌ Error de conexión.');
-        });
-}
-
-
-// --- LÓGICA DE RENDERIZADO ---
 document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('search-form');
-    const resultsContainer = document.getElementById('results-container');
-    const searchType = document.getElementById('search-type');
-    const searchValue = document.getElementById('search-value');
-    const foundCountDiv = document.getElementById('found-count');
+    // ... (Eliminar elementos no usados: resultsContainer, searchType, searchValue, foundCountDiv, filterStateSelect, adminTableContainer)
 
-    // Elementos nuevos para Admin
-    const filterButton = document.getElementById('filter-button');
-    const filterStateSelect = document.getElementById('filter-state');
-    const adminTableContainer = document.getElementById('admin-table-container');
+    // --- NUEVOS ELEMENTOS ---
     const createForm = document.getElementById('create-form');
+    const shipmentsTable = $('#shipmentsTable'); // Usar jQuery para DataTables
 
-    // Detectar si estamos en la vista de ADMINISTRACIÓN o PÚBLICA
     const isAdminView = window.location.pathname.startsWith('/admin');
 
-    // --- GESTIÓN DEL DROPDOWN SEGÚN ROL ---
     if (isAdminView) {
-        const option = document.createElement('option');
-        option.value = 'dbid';
-        option.text = 'ID de Registro (Clave Única)';
-        searchType.add(option, searchType.options[0]);
-        searchType.value = 'dbid';
+        // 1. Inicializar la tabla de DataTables
+        loadAdminTable(shipmentsTable);
 
-        // Listener para el botón de filtrado
-        if (filterButton) {
-            filterButton.addEventListener('click', async (e) => {
-                e.preventDefault();
-                const state = filterStateSelect.value;
-                if (!state) {
-                    alert("Por favor seleccione un estado.");
-                    return;
-                }
-
-                foundCountDiv.innerHTML = 'Cargando tabla...';
-                resultsContainer.innerHTML = '';
-                adminTableContainer.innerHTML = '';
-
-                try {
-                    const response = await fetch(`/api/filter-by-state?state=${encodeURIComponent(state)}`);
-                    const data = await response.json();
-
-                    foundCountDiv.innerHTML = `Se encontraron <b>${data.count}</b> envíos con estado: <b>${state}</b>`;
-
-                    if (data.count > 0) {
-                        renderTable(data.packages);
-                    } else {
-                        adminTableContainer.innerHTML = '<p>No hay resultados.</p>';
-                    }
-                } catch (error) {
-                    console.error("Error filtrando:", error);
-                    adminTableContainer.innerHTML = '<p class="error-message">Error al cargar datos.</p>';
-                }
-            });
-        }
-
-        // Listener para el formulario de creación
+        // 2. Listener para el formulario de creación (Mismo código)
         if (createForm) {
             createForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -203,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (result.success) {
                         alert(`✅ Envío creado con ID: ${result.id}`);
                         createForm.reset();
+                        // Recargar la tabla (DataTables lo hace con ajax.reload())
+                        shipmentsTable.DataTable().ajax.reload();
                     } else {
                         alert(`❌ Error al crear: ${result.error}`);
                     }
@@ -213,165 +47,90 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
-
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const type = searchType.value;
-        const value = searchValue.value;
-
-        resultsContainer.innerHTML = '';
-        if (adminTableContainer) adminTableContainer.innerHTML = '';
-        foundCountDiv.innerHTML = 'Buscando...';
-
-        try {
-            const response = await fetch(`/api/search?type=${type}&value=${value}`);
-            const data = await response.json();
-
-            if (data.error) {
-                resultsContainer.innerHTML = `<p class="error-message">Error: ${data.error}</p>`;
-                foundCountDiv.innerHTML = '';
-                return;
-            }
-
-            renderResults(data);
-
-        } catch (error) {
-            resultsContainer.innerHTML = `<p class="error-message">Error de conexión al servidor.</p>`;
-            foundCountDiv.innerHTML = '';
-            console.error('Fetch error:', error);
-        }
-    });
-
-    function renderResults(data) {
-        foundCountDiv.innerHTML = `Se encontraron <b>${data.count}</b> paquete(s).`;
-        resultsContainer.innerHTML = '';
-
-        if (data.count === 0) {
-            resultsContainer.innerHTML = `<p class="package-card">No se encontraron paquetes para su consulta.</p>`;
-            return;
-        }
-
-        data.packages.forEach(pkg => {
-            resultsContainer.innerHTML += createPackageCard(pkg, isAdminView);
-        });
-    }
-
-    function renderTable(packages) {
-        if (!adminTableContainer) return;
-
-        let tableHtml = `
-            <table class="table table-bordered table-striped">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Tracking</th>
-                        <th>Receptor</th>
-                        <th>DDP</th>
-                        <th>Peso</th>
-                        <th>Estado (Click para Editar)</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        packages.forEach(pkg => {
-            const statusClass = getStatusClass(pkg.estado);
-            tableHtml += `
-                <tr>
-                    <td>${pkg.id}</td>
-                    <td>${pkg.numero_seguimiento || 'N/A'}</td>
-                    <td class="editable" onclick="quickEdit(${pkg.id}, 'nombre_receptor', '${pkg.nombre_receptor}')">${pkg.nombre_receptor}</td>
-                    <td>${pkg.codigo_ddp}</td>
-                    <td>${pkg.peso}</td>
-                    <td class="editable ${statusClass}" onclick="quickEdit(${pkg.id}, 'estado', '${pkg.estado}')" style="font-weight:bold;">${pkg.estado}</td>
-                    <td>
-                        <button onclick="quickEdit(${pkg.id}, 'estado', '${pkg.estado}')">Estado</button>
-                        <button class="delete-btn" onclick="deletePackage(${pkg.id})">Borrar</button>
-                    </td>
-                </tr>
-            `;
-        });
-
-        tableHtml += `</tbody></table>`;
-        adminTableContainer.innerHTML = tableHtml;
-    }
-
-    function getStatusClass(status) {
-        if (status === 'RECIBIDO EN CUCUTA') return 'status-received';
-        if (status === 'ENVIADO A TACHIRA') return 'status-sent-tachira';
-        if (status === 'ENVIADO A CLIENTE') return 'status-sent-client';
-        return '';
-    }
-
-    // Función que construye la tarjeta de resultado
-    function createPackageCard(pkg, isAdmin) {
-        const fechaRecepcion = pkg.fecha_recepcion && pkg.fecha_recepcion !== 'N/A' ? pkg.fecha_recepcion.substring(0, 10) : 'N/A';
-
-        const imageUrl = pkg.imagen_link;
-        const estado = pkg.estado || 'Estado No Definido';
-        const isErrorImage = !imageUrl || imageUrl === 'N/A';
-
-        const imageHtml = isErrorImage
-            ? `<div class="image-section">Error al cargar la imagen</div>`
-            : `<div class="image-section" style="background-color: #f0f8ff;">
-                <p><a href="${imageUrl}" target="_blank">(Clic para Abrir Foto)</a></p>
-               </div>`;
-
-        const editableAttr = (field, value) => isAdmin ? `class="editable" onclick="quickEdit(${pkg.id}, '${field}', '${value}')"` : '';
-        const editableClass = isAdmin ? 'editable' : '';
-        const statusColorClass = getStatusClass(estado);
-
-        return `
-            <div class="package-card">
-                <div class="card-title">
-                    Paquete: ${pkg.numero_seguimiento || 'N/A'}
-                    <span class="db-id-tag">ID: ${pkg.id}</span>
-                </div>
-
-                <p>Imagen de Paquete Recibido: ${isErrorImage ? '' : `<a href="${imageUrl}" target="_blank">(Clic para Abrir)</a>`}</p>
-                
-                ${imageHtml}
-                
-                <div class="detail-row">
-                    <span class="detail-label">Cliente:</span>
-                    <span class="detail-value" ${editableAttr('nombre_receptor', pkg.nombre_receptor)}>${pkg.nombre_receptor}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Código DDP:</span> <!-- RENAMED: removed (Ref.) -->
-                    <span class="detail-value" ${editableAttr('codigo_ddp', pkg.codigo_ddp)}>${pkg.codigo_ddp}</span>
-                </div>
-                
-                <div class="detail-row">
-                    <span class="detail-label">Peso:</span>
-                    <span class="detail-value" ${editableAttr('peso', pkg.peso)}>${pkg.peso} kg</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Contenido:</span>
-                    <span class="detail-value" ${editableAttr('contenido', pkg.contenido)}>${pkg.contenido}</span>
-                </div>
-                
-                <div class="detail-row">
-                    <span class="detail-label">Empresa de Transporte:</span>
-                    <span class="detail-value" ${editableAttr('empresa_transporte', pkg.empresa_transporte)}>${pkg.empresa_transporte}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Proveedor:</span>
-                    <span class="detail-value" ${editableAttr('proveedor', pkg.proveedor)}>${pkg.proveedor}</span>
-                </div>
-                
-                <div class="detail-row">
-                    <span class="detail-label">Fecha de Recepción:</span>
-                    <span class="detail-value" ${editableAttr('fecha_recepcion', fechaRecepcion)}>${fechaRecepcion}</span>
-                </div>
-                
-                <div class="detail-row">
-                    <span class="detail-label">Valor de la Mercancía:</span>
-                    <span class="detail-value" ${editableAttr('costo', pkg.costo)}>${pkg.moneda_costo || 'N/A'} ${pkg.costo}</span>
-                </div>
-                
-                <div class="status-section ${editableClass} ${statusColorClass}" ${editableAttr('estado', estado)}>ESTADO ACTUAL: ${estado}</div>
-            </div>
-        `;
-    }
+    // ... (Mantener la lógica de búsqueda pública si es necesaria, pero eliminar la lógica de filtrado por estado antigua)
 });
+
+// --- FUNCIÓN DE CARGA DE TABLA CON DATATABLES ---
+function loadAdminTable(tableElement) {
+    if (!$.fn.DataTable) {
+        console.error("DataTables no está cargado.");
+        return;
+    }
+
+    // Inicializar DataTables con carga AJAX
+    tableElement.DataTable({
+        ajax: {
+            url: '/api/admin/all-shipments',
+            dataSrc: 'packages'
+        },
+        columns: [
+            {
+                data: 'id',
+                render: (data, type, row) => `<span class="editable-cell" onclick="quickEdit(${data}, 'id', '${data}')">${data}</span>`
+            },
+            { data: 'numero_seguimiento', defaultContent: 'N/A' },
+            {
+                data: 'nombre_receptor',
+                render: (data, type, row) => `<span class="editable-cell" onclick="quickEdit(${row.id}, 'nombre_receptor', '${data}')">${data}</span>`
+            },
+            { data: 'codigo_ddp' },
+            { data: 'peso', render: (data) => `${data} kg` },
+            {
+                data: 'estado',
+                render: (data, type, row) => {
+                    const statusClass = getStatusClass(data);
+                    return `<span class="badge ${statusClass}" 
+                                onclick="quickEdit(${row.id}, 'estado', '${data}')"
+                                style="cursor:pointer;">${data}</span>`;
+                }
+            },
+            {
+                // Columna de Acciones (Botones)
+                data: null,
+                orderable: false,
+                render: (data, type, row) => {
+                    return `
+                        <button class="btn btn-sm btn-danger" onclick="deletePackage(${row.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                }
+            }
+        ],
+        // Opciones de DataTables (Español)
+        language: {
+            "decimal": "",
+            "emptyTable": "No hay datos disponibles en la tabla",
+            "info": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+            "infoEmpty": "Mostrando 0 a 0 de 0 entradas",
+            "infoFiltered": "(filtrado de _MAX_ entradas totales)",
+            "infoPostFix": "",
+            "thousands": ",",
+            "lengthMenu": "Mostrar _MENU_ entradas",
+            "loadingRecords": "Cargando...",
+            "processing": "Procesando...",
+            "search": "Buscar:",
+            "zeroRecords": "No se encontraron registros coincidentes",
+            "paginate": {
+                "first": "Primero",
+                "last": "Último",
+                "next": "Siguiente",
+                "previous": "Anterior"
+            },
+            "aria": {
+                "sortAscending": ": activar para ordenar la columna ascendente",
+                "sortDescending": ": activar para ordenar la columna descendente"
+            }
+        },
+        responsive: true,
+        autoWidth: false,
+        order: [[0, "desc"]] // Ordenar por ID descendente por defecto
+    });
+}
+
+function getStatusClass(status) {
+    if (status === 'RECIBIDO EN CUCUTA') return 'badge-warning'; // Amarillo
+    if (status === 'ENVIADO A TACHIRA') return 'badge-primary';  // Azul
+    if (status === 'ENVIADO A CLIENTE') return 'badge-success';  // Verde
+    return 'badge-secondary';
+}
