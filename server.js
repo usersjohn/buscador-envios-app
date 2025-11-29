@@ -52,7 +52,7 @@ app.get('/api/search', async (req, res) => {
     const searchTerm = value ? value.trim().toUpperCase() : '';
     const originalValue = req.query.value ? req.query.value.trim() : ''; // Valor sin uppercase para ID
 
-    if (!searchTerm || !type) {
+    if ((!searchTerm && type !== 'all') || !type) {
         return res.status(400).json({ error: 'Faltan parámetros de búsqueda.' });
     }
 
@@ -84,6 +84,11 @@ app.get('/api/search', async (req, res) => {
                 break;
             case 'state':
                 query += `estado = $1`;
+                break;
+            case 'all':
+                // Remove the WHERE clause if it's just "WHERE "
+                query = query.replace(' WHERE ', '');
+                params = [];
                 break;
             default:
                 return res.status(400).json({ error: 'Tipo de búsqueda no válido.' });

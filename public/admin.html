@@ -268,6 +268,13 @@
             display: flex;
             gap: 1rem;
             margin-bottom: 1.5rem;
+            align-items: center;
+        }
+
+        .search-input-group {
+            flex: 1;
+            display: flex;
+            gap: 0.5rem;
         }
     </style>
 </head>
@@ -306,14 +313,18 @@
 
             <div class="card">
                 <div class="search-bar">
-                    <input type="text" id="searchInput" class="form-control" placeholder="Buscar..."
-                        onkeyup="searchPackages()">
-                    <select id="searchType" class="form-control" style="width: 200px;" onchange="searchPackages()">
+                    <div class="search-input-group" id="searchContainer">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Buscar..."
+                            onkeyup="searchPackages()">
+                    </div>
+                    <select id="searchType" class="form-control" style="width: 200px;"
+                        onchange="handleSearchTypeChange()">
                         <option value="tracking">Tracking</option>
                         <option value="receptor">Receptor</option>
                         <option value="ddp">DDP</option>
                         <option value="state">Estado</option>
                     </select>
+                    <button class="btn btn-outline" onclick="showAll()">Ver Todos</button>
                 </div>
 
                 <div class="table-container">
@@ -360,8 +371,8 @@
                         <label class="form-label">Estado</label>
                         <select name="estado" class="form-control">
                             <option value="RECIBIDO EN CUCUTA">RECIBIDO EN CUCUTA</option>
-                            <option value="EN TRANSITO">EN TRANSITO</option>
-                            <option value="ENTREGADO">ENTREGADO</option>
+                            <option value="ENVIADO A TACHIRA">ENVIADO A TACHIRA</option>
+                            <option value="ENVIADO A CLIENTE">ENVIADO A CLIENTE</option>
                         </select>
                     </div>
 
@@ -413,44 +424,79 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            searchPackages(true);
+            showAll();
         });
 
-        async function searchPackages(isInitial = false) {
-            const value = isInitial ? ' ' : document.getElementById('searchInput').value;
+        function handleSearchTypeChange() {
             const type = document.getElementById('searchType').value;
+            const container = document.getElementById('searchContainer');
 
-            if (!value && !isInitial) return;
+            if (type === 'state') {
+                container.innerHTML = `
+                    <select id="searchInput" class="form-control" onchange="searchPackages()">
+                        <option value="">Seleccione Estado...</option>
+                        <option value="RECIBIDO EN CUCUTA">RECIBIDO EN CUCUTA</option>
+                        <option value="ENVIADO A TACHIRA">ENVIADO A TACHIRA</option>
+                        <option value="ENVIADO A CLIENTE">ENVIADO A CLIENTE</option>
+                    </select>
+                `;
+            } else {
+                container.innerHTML = `
+                    <input type="text" id="searchInput" class="form-control" placeholder="Buscar..." onkeyup="searchPackages()">
+                `;
+            }
+        }
 
-            const effectiveValue = value || ' ';
-            const effectiveType = value ? type : 'receptor';
+        async function showAll() {
+            // Reset search UI
+            document.getElementById('searchType').value = 'tracking'; // Default
+            handleSearchTypeChange();
+            document.getElementById('searchInput').value = '';
 
             try {
-                const response = await fetch(`/api/search?type=${effectiveType}&value=${effectiveValue}`);
+                const response = await fetch(`/api/search?type=all&value=all`);
                 const data = await response.json();
+                renderTable(data.packages);
+            } catch (error) {
+                console.error('Error loading all packages:', error);
+            }
+        }
 
-                const tbody = document.querySelector('#packagesTable tbody');
-                tbody.innerHTML = '';
+        async function searchPackages() {
+            const value = document.getElementById('searchInput').value;
+            const type = document.getElementById('searchType').value;
 
-                if (data.packages) {
-                    data.packages.forEach(pkg => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${pkg.id}</td>
-                            <td>${pkg.numero_seguimiento || '-'}</td>
-                            <td>${pkg.nombre_receptor || '-'}</td>
-                            <td>${pkg.codigo_ddp || '-'}</td>
-                            <td><span class="badge badge-success">${pkg.estado}</span></td>
-                            <td class="actions">
-                                <button class="btn btn-outline" style="padding: 0.25rem 0.5rem;" onclick='editPackage(${JSON.stringify(pkg)})'>✏️</button>
-                                <button class="btn btn-danger" style="padding: 0.25rem 0.5rem;" onclick="deletePackage(${pkg.id})">🗑️</button>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                }
+            if (!value) return;
+
+            try {
+                const response = await fetch(`/api/search?type=${type}&value=${value}`);
+                const data = await response.json();
+                renderTable(data.packages);
             } catch (error) {
                 console.error('Error loading packages:', error);
+            }
+        }
+
+        function renderTable(packages) {
+            const tbody = document.querySelector('#packagesTable tbody');
+            tbody.innerHTML = '';
+
+            if (packages) {
+                packages.forEach(pkg => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${pkg.id}</td>
+                        <td>${pkg.numero_seguimiento || '-'}</td>
+                        <td>${pkg.nombre_receptor || '-'}</td>
+                        <td>${pkg.codigo_ddp || '-'}</td>
+                        <td><span class="badge badge-success">${pkg.estado}</span></td>
+                        <td class="actions">
+                            <button class="btn btn-outline" style="padding: 0.25rem 0.5rem;" onclick='editPackage(${JSON.stringify(pkg)})'>✏️</button>
+                            <button class="btn btn-danger" style="padding: 0.25rem 0.5rem;" onclick="deletePackage(${pkg.id})">🗑️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
             }
         }
 
@@ -512,7 +558,13 @@
                 });
 
                 if (response.ok) {
-                    searchPackages();
+                    // Refresh current view
+                    const searchVal = document.getElementById('searchInput').value;
+                    if (searchVal) {
+                        searchPackages();
+                    } else {
+                        showAll();
+                    }
                 } else {
                     alert('Error al eliminar');
                 }
@@ -559,7 +611,13 @@
 
                 if (response.ok) {
                     closeModal();
-                    searchPackages();
+                    // Refresh current view
+                    const searchVal = document.getElementById('searchInput').value;
+                    if (searchVal) {
+                        searchPackages();
+                    } else {
+                        showAll();
+                    }
                 } else {
                     alert('Error al guardar');
                 }
