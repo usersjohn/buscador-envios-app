@@ -27,7 +27,7 @@ app.use(cookieParser());
 // --- CONFIGURACIÓN DE EJS ---
 app.use(expressLayouts);
 app.set('view engine', 'ejs');
-app.set('layout', './layouts/main');
+app.set('layout', 'layouts/main');
 
 // --- FUNCIÓN DE VERIFICACIÓN DE SESIÓN (Middleware) ---
 const requireAdmin = (req, res, next) => {
