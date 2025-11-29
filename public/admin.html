@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -69,7 +70,8 @@
             font-weight: 500;
         }
 
-        .nav-item:hover, .nav-item.active {
+        .nav-item:hover,
+        .nav-item.active {
             background-color: #eff6ff;
             color: var(--primary);
         }
@@ -139,7 +141,7 @@
         .card {
             background-color: var(--surface);
             border-radius: 1rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             padding: 1.5rem;
             margin-bottom: 1.5rem;
         }
@@ -200,7 +202,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.5);
+            background-color: rgba(0, 0, 0, 0.5);
             z-index: 1000;
             align-items: center;
             justify-content: center;
@@ -215,13 +217,23 @@
             border-radius: 1rem;
             padding: 2rem;
             width: 100%;
-            max-width: 600px;
+            max-width: 800px;
             max-height: 90vh;
             overflow-y: auto;
         }
 
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
         .form-group {
             margin-bottom: 1rem;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
         }
 
         .form-label {
@@ -251,7 +263,7 @@
             display: flex;
             gap: 0.5rem;
         }
-        
+
         .search-bar {
             display: flex;
             gap: 1rem;
@@ -259,6 +271,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="layout">
         <aside class="sidebar">
@@ -267,11 +280,19 @@
             </div>
             <nav>
                 <a href="#" class="nav-item active">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                        </path>
+                    </svg>
                     Envíos
                 </a>
                 <a href="http://localhost:5050" target="_blank" class="nav-item">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
+                        </path>
+                    </svg>
                     pgAdmin 4
                 </a>
             </nav>
@@ -285,11 +306,13 @@
 
             <div class="card">
                 <div class="search-bar">
-                    <input type="text" id="searchInput" class="form-control" placeholder="Buscar por tracking, receptor, DDP..." onkeyup="searchPackages()">
-                    <select id="searchType" class="form-control" style="width: 200px;">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Buscar..."
+                        onkeyup="searchPackages()">
+                    <select id="searchType" class="form-control" style="width: 200px;" onchange="searchPackages()">
                         <option value="tracking">Tracking</option>
                         <option value="receptor">Receptor</option>
                         <option value="ddp">DDP</option>
+                        <option value="state">Estado</option>
                     </select>
                 </div>
 
@@ -320,26 +343,66 @@
             <h2 style="margin-bottom: 1.5rem;" id="modalTitle">Nuevo Envío</h2>
             <form id="shipmentForm" onsubmit="handleFormSubmit(event)">
                 <input type="hidden" id="editId">
-                <div class="form-group">
-                    <label class="form-label">Número de Seguimiento</label>
-                    <input type="text" name="numero_seguimiento" class="form-control" required>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Número de Seguimiento</label>
+                        <input type="text" name="numero_seguimiento" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cliente (Receptor)</label>
+                        <input type="text" name="nombre_receptor" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Código DDP</label>
+                        <input type="text" name="codigo_ddp" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Estado</label>
+                        <select name="estado" class="form-control">
+                            <option value="RECIBIDO EN CUCUTA">RECIBIDO EN CUCUTA</option>
+                            <option value="EN TRANSITO">EN TRANSITO</option>
+                            <option value="ENTREGADO">ENTREGADO</option>
+                        </select>
+                    </div>
+
+                    <!-- New Fields -->
+                    <div class="form-group full-width">
+                        <label class="form-label">Imagen de Paquete (URL)</label>
+                        <input type="text" name="imagen_link" class="form-control" placeholder="https://...">
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">Paquete (Contenido)</label>
+                        <input type="text" name="contenido" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Peso (Kg)</label>
+                        <input type="number" step="0.01" name="peso" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Empresa de Transporte</label>
+                        <input type="text" name="empresa_transporte" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Proveedor</label>
+                        <input type="text" name="proveedor" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha de Recepción</label>
+                        <input type="date" name="fecha_recepcion" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Valor de la Mercancía</label>
+                        <input type="number" step="0.01" name="costo" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Moneda</label>
+                        <select name="moneda_costo" class="form-control">
+                            <option value="USD">USD</option>
+                            <option value="COP">COP</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Nombre Receptor</label>
-                    <input type="text" name="nombre_receptor" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Código DDP</label>
-                    <input type="text" name="codigo_ddp" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Estado</label>
-                    <select name="estado" class="form-control">
-                        <option value="RECIBIDO EN CUCUTA">RECIBIDO EN CUCUTA</option>
-                        <option value="EN TRANSITO">EN TRANSITO</option>
-                        <option value="ENTREGADO">ENTREGADO</option>
-                    </select>
-                </div>
+
                 <div class="actions" style="margin-top: 2rem; justify-content: flex-end;">
                     <button type="button" class="btn btn-outline" onclick="closeModal()">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
@@ -349,36 +412,23 @@
     </div>
 
     <script>
-        // Load data on start
         document.addEventListener('DOMContentLoaded', () => {
-            // Initial load - maybe load all or just show empty state
-            // For now let's try to load something if possible, or just wait for search
-            // Actually, let's load all by default if the API supports it, or just search for ' '
-             searchPackages(true);
+            searchPackages(true);
         });
 
         async function searchPackages(isInitial = false) {
             const value = isInitial ? ' ' : document.getElementById('searchInput').value;
             const type = document.getElementById('searchType').value;
-            
+
             if (!value && !isInitial) return;
 
-            // If value is empty space (initial load hack), we might need to adjust the API or just search for 'a' or something common if the API doesn't support list all.
-            // Looking at server.js, it requires a value.
-            // Let's try to search for something broad or just handle the UI.
-            // For this demo, let's assume the user types something.
-            
-            // Actually, let's modify the client to just search for " " (space) which might return everything if the SQL uses ILIKE with % %
-            // Server code: query += `nombre_receptor ILIKE $1`; params = [`%${searchTerm}%`];
-            // So if type is receptor and value is space, it matches everything.
-            
             const effectiveValue = value || ' ';
             const effectiveType = value ? type : 'receptor';
 
             try {
                 const response = await fetch(`/api/search?type=${effectiveType}&value=${effectiveValue}`);
                 const data = await response.json();
-                
+
                 const tbody = document.querySelector('#packagesTable tbody');
                 tbody.innerHTML = '';
 
@@ -408,7 +458,7 @@
             const modal = document.getElementById('shipmentModal');
             const form = document.getElementById('shipmentForm');
             const title = document.getElementById('modalTitle');
-            
+
             if (pkg) {
                 title.textContent = 'Editar Envío';
                 document.getElementById('editId').value = pkg.id;
@@ -416,12 +466,30 @@
                 form.nombre_receptor.value = pkg.nombre_receptor || '';
                 form.codigo_ddp.value = pkg.codigo_ddp || '';
                 form.estado.value = pkg.estado || 'RECIBIDO EN CUCUTA';
+
+                // New fields
+                form.imagen_link.value = pkg.imagen_link || '';
+                form.contenido.value = pkg.contenido || '';
+                form.peso.value = pkg.peso || '';
+                form.empresa_transporte.value = pkg.empresa_transporte || '';
+                form.proveedor.value = pkg.proveedor || '';
+                form.costo.value = pkg.costo || '';
+                form.moneda_costo.value = pkg.moneda_costo || 'USD';
+
+                // Date handling
+                if (pkg.fecha_recepcion) {
+                    const date = new Date(pkg.fecha_recepcion);
+                    form.fecha_recepcion.value = date.toISOString().split('T')[0];
+                } else {
+                    form.fecha_recepcion.value = '';
+                }
+
             } else {
                 title.textContent = 'Nuevo Envío';
                 document.getElementById('editId').value = '';
                 form.reset();
             }
-            
+
             modal.classList.add('active');
         }
 
@@ -442,7 +510,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id })
                 });
-                
+
                 if (response.ok) {
                     searchPackages();
                 } else {
@@ -458,44 +526,29 @@
             e.preventDefault();
             const form = e.target;
             const id = document.getElementById('editId').value;
-            
+
             const data = {
                 numero_seguimiento: form.numero_seguimiento.value,
                 nombre_receptor: form.nombre_receptor.value,
                 codigo_ddp: form.codigo_ddp.value,
-                estado: form.estado.value
+                estado: form.estado.value,
+                imagen_link: form.imagen_link.value,
+                contenido: form.contenido.value,
+                peso: form.peso.value,
+                empresa_transporte: form.empresa_transporte.value,
+                proveedor: form.proveedor.value,
+                fecha_recepcion: form.fecha_recepcion.value,
+                costo: form.costo.value,
+                moneda_costo: form.moneda_costo.value
             };
 
             try {
                 let url = '/api/create';
                 let method = 'POST';
-                
-                if (id) {
-                    // Update logic is a bit complex in server.js (field by field), 
-                    // but for this demo let's just support creating new ones easily.
-                    // The server.js update API is /api/update and takes {id, field, value}.
-                    // This means we have to make multiple calls or update server.js to support bulk update.
-                    // For now, let's just alert that update is limited or implement multiple calls.
-                    
-                    // Let's do multiple calls for the update
-                    const updates = [
-                        { field: 'numero_seguimiento', value: data.numero_seguimiento },
-                        { field: 'nombre_receptor', value: data.nombre_receptor },
-                        { field: 'codigo_ddp', value: data.codigo_ddp },
-                        { field: 'estado', value: data.estado }
-                    ];
 
-                    for (const update of updates) {
-                        await fetch('/api/update', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ id, field: update.field, value: update.value })
-                        });
-                    }
-                    
-                    closeModal();
-                    searchPackages();
-                    return;
+                if (id) {
+                    url = '/api/update-full';
+                    data.id = id;
                 }
 
                 const response = await fetch(url, {
@@ -517,4 +570,5 @@
         }
     </script>
 </body>
+
 </html>

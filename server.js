@@ -82,6 +82,9 @@ app.get('/api/search', async (req, res) => {
                 query += `id = $1`;
                 params = [dbId]; // El ID es numérico, lo pasamos como número
                 break;
+            case 'state':
+                query += `estado = $1`;
+                break;
             default:
                 return res.status(400).json({ error: 'Tipo de búsqueda no válido.' });
         }
@@ -175,6 +178,63 @@ app.post('/api/update', requireAdmin, async (req, res) => {
     } catch (err) {
         console.error('Error al actualizar:', err.message);
         res.status(500).json({ success: false, error: `Error interno al actualizar. Tipo de dato o caracter inválido: ${err.message}` });
+    }
+});
+
+// 3.1 API de Actualización Completa (PROTEGIDA)
+app.post('/api/update-full', requireAdmin, async (req, res) => {
+    const {
+        id, numero_seguimiento, codigo_ddp, nombre_receptor, peso, contenido,
+        empresa_transporte, proveedor, fecha_recepcion, costo, moneda_costo,
+        imagen_link, estado
+    } = req.body;
+
+    const recordId = parseInt(id, 10);
+
+    if (!recordId || recordId <= 0) {
+        return res.status(400).json({ success: false, error: 'ID inválido.' });
+    }
+
+    try {
+        const query = `
+            UPDATE envios SET
+                numero_seguimiento = $1,
+                codigo_ddp = $2,
+                nombre_receptor = $3,
+                peso = $4,
+                contenido = $5,
+                empresa_transporte = $6,
+                proveedor = $7,
+                fecha_recepcion = $8,
+                costo = $9,
+                moneda_costo = $10,
+                imagen_link = $11,
+                estado = $12
+            WHERE id = $13
+        `;
+
+        const values = [
+            numero_seguimiento || null,
+            codigo_ddp || null,
+            nombre_receptor || null,
+            peso || 0,
+            contenido || null,
+            empresa_transporte || null,
+            proveedor || null,
+            fecha_recepcion || null,
+            costo || 0,
+            moneda_costo || 'USD',
+            imagen_link || null,
+            estado || 'RECIBIDO EN CUCUTA',
+            recordId
+        ];
+
+        await pool.query(query, values);
+        res.status(200).json({ success: true, message: 'Registro actualizado exitosamente.' });
+
+    } catch (err) {
+        console.error('Error al actualizar completo:', err.message);
+        res.status(500).json({ success: false, error: `Error al actualizar: ${err.message}` });
     }
 });
 
